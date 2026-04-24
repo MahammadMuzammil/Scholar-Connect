@@ -88,6 +88,14 @@ create policy "scholars: public read active"
   to anon, authenticated
   using (active = true);
 
+-- Allow any signed-in user to create their own scholar profile row.
+-- (Demo-level security: anyone could self-promote — acceptable for MVP.)
+drop policy if exists "scholars: authenticated insert" on scholars;
+create policy "scholars: authenticated insert"
+  on scholars for insert
+  to authenticated
+  with check (true);
+
 -- Seed current scholars. On conflict (re-run), update public fields.
 insert into scholars (id, name, title, specialties, languages, rating, reviews, price_per_session, session_minutes, photo, bio, sort_order)
 values
@@ -141,6 +149,14 @@ create policy "profiles: self read"
   on profiles for select
   to authenticated
   using (id = auth.uid());
+
+-- Allow users to update their own profile (e.g. set role=scholar on signup).
+drop policy if exists "profiles: self update" on profiles;
+create policy "profiles: self update"
+  on profiles for update
+  to authenticated
+  using (id = auth.uid())
+  with check (id = auth.uid());
 
 -- Auto-create a default 'user' profile row whenever someone signs up.
 create or replace function handle_new_user()

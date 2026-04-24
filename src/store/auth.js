@@ -47,7 +47,7 @@ export function subscribeSession(handler) {
   return () => data.subscription.unsubscribe();
 }
 
-export async function signupUser({ name, email, password }) {
+export async function signupUser({ name, email, password, role = 'user' }) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -59,6 +59,35 @@ export async function signupUser({ name, email, password }) {
       'Account created — please check your email to confirm. Or disable "Confirm email" in Supabase Authentication → Providers for dev.'
     );
   }
+
+  // If signing up as a scholar, create the scholar profile row and link it.
+  if (role === 'scholar') {
+    const userId = data.session.user.id;
+    const scholarId = userId; // use auth UUID as the scholar id
+
+    const { error: scholarErr } = await supabase.from('scholars').insert({
+      id: scholarId,
+      name,
+      title: 'Scholar',
+      specialties: [],
+      languages: [],
+      rating: 4.8,
+      reviews: 0,
+      price_per_session: 40,
+      session_minutes: 30,
+      photo: `https://i.pravatar.cc/300?u=${encodeURIComponent(email)}`,
+      bio: `${name} is a new scholar on ScholarConnect.`,
+      sort_order: 100,
+    });
+    if (scholarErr) throw new Error(`Couldn't create scholar profile: ${scholarErr.message}`);
+
+    const { error: profErr } = await supabase
+      .from('profiles')
+      .update({ role: 'scholar', scholar_id: scholarId })
+      .eq('id', userId);
+    if (profErr) throw new Error(`Couldn't set role: ${profErr.message}`);
+  }
+
   return sessionFromSupabase(data.session);
 }
 
