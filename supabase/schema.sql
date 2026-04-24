@@ -53,7 +53,74 @@ create policy "anon can update bookings"
 
 -- ──────────────── Realtime ────────────────
 -- Enables realtime subscriptions so the scholar dashboard updates live.
-alter publication supabase_realtime add table bookings;
+do $$
+begin
+  alter publication supabase_realtime add table bookings;
+exception when duplicate_object then
+  null;  -- already a member of the publication
+end $$;
+
+-- ──────────────── Scholars (public profiles) ────────────────
+-- Add, edit, disable scholars entirely from the Supabase Table Editor.
+create table if not exists scholars (
+  id                  text primary key,
+  name                text not null,
+  title               text,
+  specialties         text[] not null default '{}',
+  languages           text[] not null default '{}',
+  rating              numeric(2,1) default 4.8,
+  reviews             int default 0,
+  price_per_session   int not null default 40,
+  session_minutes     int not null default 30,
+  photo               text,
+  bio                 text,
+  verified            boolean not null default true,
+  active              boolean not null default true,   -- set to false to hide from marketplace
+  sort_order          int default 0,
+  created_at          timestamptz not null default now()
+);
+
+alter table scholars enable row level security;
+
+drop policy if exists "scholars: public read active" on scholars;
+create policy "scholars: public read active"
+  on scholars for select
+  to anon, authenticated
+  using (active = true);
+
+-- Seed current scholars. On conflict (re-run), update public fields.
+insert into scholars (id, name, title, specialties, languages, rating, reviews, price_per_session, session_minutes, photo, bio, sort_order)
+values
+  ('sh-muzammil',
+   'Sheikh Muzammil',
+   'Mufti & Islamic Jurisprudence Scholar',
+   array['Fiqh', 'Family Matters', 'Ramadan Rulings'],
+   array['Urdu', 'Arabic', 'English'],
+   4.9, 1420, 40, 30,
+   'https://i.pravatar.cc/300?img=12',
+   'Specializes in contemporary fiqh issues, family rulings, and guidance during Ramadan. Trained in the classical Hanafi tradition with 15+ years of teaching.',
+   10),
+  ('sh-farooq',
+   'Sheikh Farooq',
+   'Aqeedah & Seerah Scholar',
+   array['Aqeedah', 'Seerah', 'Dream Interpretation'],
+   array['Arabic', 'English', 'Urdu'],
+   4.8, 980, 50, 30,
+   'https://i.pravatar.cc/300?img=33',
+   'Teaches aqeedah and Prophetic biography at an international Islamic institute. Also provides Shariah-grounded dream interpretation in the tradition of Imam Ibn Sirin.',
+   20)
+on conflict (id) do update set
+  name              = excluded.name,
+  title             = excluded.title,
+  specialties       = excluded.specialties,
+  languages         = excluded.languages,
+  rating            = excluded.rating,
+  reviews           = excluded.reviews,
+  price_per_session = excluded.price_per_session,
+  session_minutes   = excluded.session_minutes,
+  photo             = excluded.photo,
+  bio               = excluded.bio,
+  sort_order        = excluded.sort_order;
 
 -- ──────────────── Profiles (roles) ────────────────
 -- Each Supabase Auth user gets a profile row. The `role` column is the

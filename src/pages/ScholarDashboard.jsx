@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getScholar, generateSlots } from '../data/scholars.js';
+import { generateSlots } from '../store/scholars.js';
+import { useScholar } from '../context/ScholarsContext.jsx';
 import { getBookingsForScholar, markRead, subscribeBookings } from '../store/bookings.js';
 import { useSession } from '../context/AuthContext.jsx';
 import JoinButton from '../components/JoinButton.jsx';
@@ -17,7 +18,7 @@ function fmt(iso) {
 
 export default function ScholarDashboard() {
   const session = useSession();
-  const scholar = getScholar(session?.id);
+  const { scholar, loading: scholarLoading } = useScholar(session?.id);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +44,14 @@ export default function ScholarDashboard() {
     () => (scholar ? generateSlots(scholar.id).slice(0, 15) : []),
     [scholar]
   );
+
+  if (scholarLoading) {
+    return (
+      <div className="container" style={{ padding: '40px 0' }}>
+        <div className="empty">Loading…</div>
+      </div>
+    );
+  }
 
   if (!scholar) {
     return (

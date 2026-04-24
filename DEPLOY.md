@@ -36,6 +36,17 @@ Scholars sign up the same way as regular users (with any email they like). You t
 
 Downgrading a scholar back to user: same flow in reverse — edit the row, change role back to `user`, clear `scholar_id`.
 
+### Managing scholar profiles (names, photos, prices, etc.)
+
+Scholar profile data lives in the `scholars` table (public read-only to the app). Use the Table Editor to:
+
+- **Add a scholar**: insert a new row — set `id` to any slug (e.g. `sh-ibrahim`), fill in `name`, `title`, `specialties` (as `{"Fiqh","Tajweed"}` array), `languages`, `price_per_session`, `photo` URL, `bio`. Then seed a matching `profiles` row (role='scholar', scholar_id='sh-ibrahim') pointing at their auth account.
+- **Edit a scholar**: change any field — name, price, bio, photo — takes effect on next page load.
+- **Hide a scholar**: set `active` to `false` — they disappear from the marketplace but existing bookings still work.
+- **Reorder**: set `sort_order` (lower numbers show first).
+
+No code deploy needed for any of these.
+
 ## 1. Create a Supabase project (10 min)
 
 1. Sign up at https://supabase.com (free tier).

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
-import { getScholar, generateSlots } from '../data/scholars.js';
+import { generateSlots } from '../store/scholars.js';
+import { useScholar } from '../context/ScholarsContext.jsx';
 import { createBooking } from '../store/bookings.js';
 import { getSlotPricing } from '../lib/pricing.js';
 import { notifyBookingCreated } from '../lib/api.js';
@@ -22,7 +23,7 @@ export default function Booking() {
   const [sp] = useSearchParams();
   const slotId = sp.get('slot');
   const navigate = useNavigate();
-  const scholar = getScholar(id);
+  const { scholar, loading } = useScholar(id);
   const session = useSession();
 
   const slot = useMemo(() => {
@@ -33,6 +34,14 @@ export default function Booking() {
   const [form, setForm] = useState({ topic: '', card: '4242 4242 4242 4242' });
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '40px 0' }}>
+        <div className="empty">Loading…</div>
+      </div>
+    );
+  }
 
   if (!scholar) {
     return (

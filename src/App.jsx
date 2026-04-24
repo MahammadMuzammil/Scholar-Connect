@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { ScholarsProvider } from './context/ScholarsContext.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import Nav from './components/Nav.jsx';
 import Greeting from './components/Greeting.jsx';
@@ -30,8 +31,9 @@ function RootRedirect() {
 export default function App() {
   return (
     <AuthProvider>
-      <Greeting />
-      <Nav />
+      <ScholarsProvider>
+        <Greeting />
+        <Nav />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -83,6 +85,7 @@ export default function App() {
         <Route path="/call/:bookingId" element={<VideoCall />} />
       </Routes>
       <footer className="container">ScholarConnect — a Shariah-compliant consultation marketplace</footer>
+      </ScholarsProvider>
     </AuthProvider>
   );
 }

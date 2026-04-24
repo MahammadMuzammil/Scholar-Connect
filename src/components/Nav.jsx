@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getBookingsForScholar, subscribeBookings } from '../store/bookings.js';
 import { useSession } from '../context/AuthContext.jsx';
 import { logout } from '../store/auth.js';
-import { getScholar } from '../data/scholars.js';
+import { useScholar } from '../context/ScholarsContext.jsx';
 
 export default function Nav() {
   const session = useSession();
@@ -28,9 +28,10 @@ export default function Nav() {
     navigate('/login', { replace: true });
   };
 
+  const { scholar: currentScholar } = useScholar(session?.role === 'scholar' ? session.id : null);
   const displayName =
     session?.role === 'scholar'
-      ? getScholar(session.id)?.name || 'Scholar'
+      ? currentScholar?.name || session?.name || 'Scholar'
       : session?.name;
 
   return (

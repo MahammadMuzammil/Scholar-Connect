@@ -5,7 +5,7 @@ import { getCallWindow, formatCountdown } from '../lib/callWindow.js';
 import { useNow } from '../hooks/useNow.js';
 import { useSession } from '../context/AuthContext.jsx';
 import { requestVideoSession } from '../lib/api.js';
-import { getScholar } from '../data/scholars.js';
+import { useScholar } from '../context/ScholarsContext.jsx';
 
 function fmt(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -22,6 +22,7 @@ export default function VideoCall() {
   const [sp] = useSearchParams();
   const { booking, loading, error } = useBooking(bookingId);
   const session = useSession();
+  const { scholar: scholarProfile } = useScholar(booking?.scholarId);
   const now = useNow(1000);
 
   // Role detection (in priority order):
@@ -41,13 +42,13 @@ export default function VideoCall() {
     if (!booking || win?.status !== 'open' || vs || provisioning) return;
     setProvisioning(true);
     const displayName = isScholar
-      ? getScholar(booking.scholarId)?.name || booking.scholarName || 'Scholar'
+      ? scholarProfile?.name || booking.scholarName || 'Scholar'
       : session?.name || booking.user?.name || 'Guest';
     requestVideoSession(booking, { displayName, isScholar })
       .then(setVs)
       .catch((err) => setVsError(err.message || 'Could not start the session.'))
       .finally(() => setProvisioning(false));
-  }, [booking, win?.status, session, isScholar, vs, provisioning]);
+  }, [booking, win?.status, session, isScholar, scholarProfile, vs, provisioning]);
 
   if (loading) {
     return (

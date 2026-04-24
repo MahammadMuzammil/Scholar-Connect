@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { getScholar, generateSlots } from '../data/scholars.js';
+import { generateSlots } from '../store/scholars.js';
+import { useScholar } from '../context/ScholarsContext.jsx';
 import { getBookedSlotIds, subscribeBookings } from '../store/bookings.js';
 import { getSlotPricing } from '../lib/pricing.js';
 import Stars from '../components/Stars.jsx';
@@ -15,7 +16,7 @@ function formatSlot(iso) {
 export default function ScholarDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const scholar = getScholar(id);
+  const { scholar, loading } = useScholar(id);
 
   const slots = useMemo(() => (scholar ? generateSlots(scholar.id) : []), [scholar]);
   const [bookedSlotIds, setBookedSlotIds] = useState(() => new Set());
@@ -30,6 +31,14 @@ export default function ScholarDetail() {
     const unsub = subscribeBookings({ scholarId: scholar.id }, refresh);
     return () => { cancelled = true; unsub?.(); };
   }, [scholar]);
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '40px 0' }}>
+        <div className="empty">Loading scholar…</div>
+      </div>
+    );
+  }
 
   if (!scholar) {
     return (

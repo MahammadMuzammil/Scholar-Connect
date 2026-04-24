@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { scholars } from '../data/scholars.js';
+import { useScholars } from '../context/ScholarsContext.jsx';
 import Stars from '../components/Stars.jsx';
 
 export default function Home() {
+  const { scholars, loading, error } = useScholars();
   const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
@@ -15,7 +16,7 @@ export default function Home() {
         .toLowerCase()
         .includes(needle)
     );
-  }, [q]);
+  }, [q, scholars]);
 
   return (
     <div className="container">
@@ -54,7 +55,11 @@ export default function Home() {
       </section>
 
       <section style={{ paddingBottom: 40 }}>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="empty">Loading scholars…</div>
+        ) : error ? (
+          <div className="empty">Couldn't load scholars: {error}</div>
+        ) : filtered.length === 0 ? (
           <div className="empty">No scholars match your search.</div>
         ) : (
           <div className="grid">
