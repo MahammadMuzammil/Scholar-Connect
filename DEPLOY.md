@@ -8,29 +8,33 @@ Persistence lives in **Supabase** (managed Postgres + realtime).
 
 ## 1a. One-time Supabase Auth setup
 
-ScholarConnect now uses Supabase Auth — passwords are hashed, sessions are JWTs, and login works across devices.
+ScholarConnect uses Supabase Auth (hashed passwords, JWT sessions) combined with a `profiles` table for role-based access (user vs. scholar).
 
 ### Disable email confirmation (for dev)
-Supabase by default requires users to click a confirmation link in their email before logging in. For a demo this is friction. Turn it off:
+
+Without this, every signup requires clicking a link in an email. Disable for the demo:
 
 1. Supabase dashboard → **Authentication → Providers**
 2. Expand **Email**
 3. Toggle **"Confirm email"** OFF → click **Save**
 
-### Pre-create the scholar accounts
+### Run the schema
 
-Scholars don't self-register. Create their auth accounts manually so they can log in:
+Paste `supabase/schema.sql` into Supabase **SQL Editor → Run**. This creates `bookings`, `profiles`, and the auto-profile trigger.
 
-1. Supabase dashboard → **Authentication → Users**
-2. Click **"Add user"** → **"Create new user"**
-3. Email: `muzammil@scholarconnect.test` — Password: choose one and note it (e.g. `Muzammil#2003`)
-4. ✅ Check **"Auto Confirm User"**
-5. Click **Create user**
-6. Repeat for Farooq with email `farooq@scholarconnect.test`
+### Promote a user to scholar
 
-These two emails are the mapping keys in [src/data/scholars.js](src/data/scholars.js) (`SCHOLAR_EMAILS`). When someone signs in with either, the app routes them to the scholar dashboard instead of the marketplace.
+Scholars sign up the same way as regular users (with any email they like). You then promote them:
 
-Pass the password to each scholar privately. They'll sign in at `/login` with their email + that password.
+1. Scholar signs up on your site with their real email.
+2. Supabase dashboard → **Table Editor → `profiles`**.
+3. Find their row (match by the user_id from the `auth.users` table if needed).
+4. Click the **`role`** cell → change `user` → `scholar`.
+5. Click the **`scholar_id`** cell → set to `sh-muzammil` or `sh-farooq` (which scholar profile they're linked to in the frontend).
+6. Press Enter to save.
+7. That person logs out and back in → they land on `/dashboard`.
+
+Downgrading a scholar back to user: same flow in reverse — edit the row, change role back to `user`, clear `scholar_id`.
 
 ## 1. Create a Supabase project (10 min)
 

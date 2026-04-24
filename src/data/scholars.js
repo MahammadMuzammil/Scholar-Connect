@@ -33,21 +33,6 @@ export function getScholar(id) {
   return scholars.find((s) => s.id === id);
 }
 
-// Map scholar email → scholar id. Used to classify logins as a scholar.
-// Scholars are pre-created in Supabase Authentication with these emails.
-const SCHOLAR_EMAILS = {
-  'muzammil@scholarconnect.test': 'sh-muzammil',
-  'farooq@scholarconnect.test':   'sh-farooq',
-};
-
-export function scholarIdByEmail(email) {
-  return email ? SCHOLAR_EMAILS[email.toLowerCase()] || null : null;
-}
-
-export function scholarEmailById(id) {
-  return Object.entries(SCHOLAR_EMAILS).find(([, sid]) => sid === id)?.[0] || null;
-}
-
 export function generateSlots(scholarId) {
   const slots = [];
   const now = new Date();

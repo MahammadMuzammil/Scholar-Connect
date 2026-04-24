@@ -1,20 +1,37 @@
 import { supabase } from '../lib/supabase.js';
-import { scholarIdByEmail } from '../data/scholars.js';
 
-// Shape the raw Supabase user into our app's session object.
-// Adds `role` and (for scholars) `scholarId` derived from the email mapping.
-export function sessionFromSupabase(supaSession) {
+async function fetchProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role, scholar_id, name')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) {
+    console.warn('Failed to fetch profile:', error);
+    return null;
+  }
+  return data;
+}
+
+// Shape the raw Supabase user + DB profile into our app's session object.
+export async function sessionFromSupabase(supaSession) {
   const user = supaSession?.user;
   if (!user) return null;
-  const email = user.email;
-  const scholarId = email ? scholarIdByEmail(email) : null;
+  const profile = await fetchProfile(user.id);
+  const role = profile?.role || 'user';
+  const scholarId = profile?.scholar_id || null;
+  const name =
+    profile?.name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Guest';
   return {
-    role: scholarId ? 'scholar' : 'user',
-    id: scholarId || user.id,          // scholars identify as their scholar id (used to filter bookings)
+    role,
+    id: scholarId || user.id,   // scholars identify as their scholar id; users as auth UUID
     authUserId: user.id,
     scholarId,
-    name: user.user_metadata?.name || user.email?.split('@')[0] || 'Guest',
-    email,
+    name,
+    email: user.email,
   };
 }
 
@@ -24,8 +41,8 @@ export async function getSession() {
 }
 
 export function subscribeSession(handler) {
-  const { data } = supabase.auth.onAuthStateChange((_event, supaSession) => {
-    handler(sessionFromSupabase(supaSession));
+  const { data } = supabase.auth.onAuthStateChange(async (_event, supaSession) => {
+    handler(await sessionFromSupabase(supaSession));
   });
   return () => data.subscription.unsubscribe();
 }
@@ -38,7 +55,6 @@ export async function signupUser({ name, email, password }) {
   });
   if (error) throw error;
   if (!data.session) {
-    // Happens when email confirmation is ON — user must verify first.
     throw new Error(
       'Account created — please check your email to confirm. Or disable "Confirm email" in Supabase Authentication → Providers for dev.'
     );

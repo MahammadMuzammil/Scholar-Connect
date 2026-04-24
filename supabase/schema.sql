@@ -54,3 +54,60 @@ create policy "anon can update bookings"
 -- ──────────────── Realtime ────────────────
 -- Enables realtime subscriptions so the scholar dashboard updates live.
 alter publication supabase_realtime add table bookings;
+
+-- ──────────────── Profiles (roles) ────────────────
+-- Each Supabase Auth user gets a profile row. The `role` column is the
+-- authoritative answer to "is this person a scholar?".
+-- Admin changes role via Supabase Table Editor — no code change needed.
+create table if not exists profiles (
+  id          uuid primary key references auth.users on delete cascade,
+  role        text not null default 'user' check (role in ('user', 'scholar', 'admin')),
+  scholar_id  text,       -- 'sh-muzammil' / 'sh-farooq' when role='scholar', else null
+  name        text,
+  created_at  timestamptz not null default now()
+);
+
+alter table profiles enable row level security;
+
+drop policy if exists "profiles: self read" on profiles;
+create policy "profiles: self read"
+  on profiles for select
+  to authenticated
+  using (id = auth.uid());
+
+-- Auto-create a default 'user' profile row whenever someone signs up.
+create or replace function handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into profiles (id, name)
+  values (new.id, new.raw_user_meta_data->>'name')
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- Backfill profile rows for any users who signed up before this table existed.
+insert into profiles (id, name)
+select u.id, u.raw_user_meta_data->>'name'
+from auth.users u
+where not exists (select 1 from profiles p where p.id = u.id)
+on conflict (id) do nothing;
+
+-- One-time convenience: if the test scholar accounts exist from earlier setup,
+-- promote them. Running this when the users don't exist is a no-op.
+update profiles
+set role = 'scholar', scholar_id = 'sh-muzammil'
+where id in (select id from auth.users where email = 'muzammil@scholarconnect.test');
+
+update profiles
+set role = 'scholar', scholar_id = 'sh-farooq'
+where id in (select id from auth.users where email = 'farooq@scholarconnect.test');
