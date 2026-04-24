@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../store/auth.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refresh } = useAuth();
   const redirectTo = location.state?.from?.pathname;
 
   const [form, setForm] = useState({ email: '', password: '' });
@@ -16,8 +18,9 @@ export default function Login() {
     setError('');
     setBusy(true);
     try {
-      const session = await login(form);
-      if (session.role === 'scholar') {
+      await login(form);
+      const session = await refresh();
+      if (session?.role === 'scholar') {
         navigate('/dashboard', { replace: true });
       } else {
         navigate(redirectTo || '/', { replace: true });

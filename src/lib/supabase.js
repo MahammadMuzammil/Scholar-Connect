@@ -10,7 +10,11 @@ if (!url || !anon) {
 }
 
 export const supabase = createClient(url || 'http://localhost', anon || 'placeholder', {
-  auth: { persistSession: false },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'scholar-connect-auth',
+  },
 });
 
 export const supabaseReady = Boolean(url && anon);

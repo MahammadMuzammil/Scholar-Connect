@@ -27,7 +27,7 @@ export async function sessionFromSupabase(supaSession) {
     'Guest';
   return {
     role,
-    id: scholarId || user.id,   // scholars identify as their scholar id; users as auth UUID
+    id: scholarId || user.id,
     authUserId: user.id,
     scholarId,
     name,
@@ -60,41 +60,37 @@ export async function signupUser({ name, email, password, role = 'user' }) {
     );
   }
 
-  // If signing up as a scholar, create the scholar profile row and link it.
   if (role === 'scholar') {
     const userId = data.session.user.id;
-    const scholarId = userId; // use auth UUID as the scholar id
-
-    const { error: scholarErr } = await supabase.from('scholars').insert({
-      id: scholarId,
-      name,
-      title: 'Scholar',
-      specialties: [],
-      languages: [],
-      rating: 4.8,
-      reviews: 0,
-      price_per_session: 40,
-      session_minutes: 30,
-      photo: `https://i.pravatar.cc/300?u=${encodeURIComponent(email)}`,
-      bio: `${name} is a new scholar on ScholarConnect.`,
-      sort_order: 100,
-    });
-    if (scholarErr) throw new Error(`Couldn't create scholar profile: ${scholarErr.message}`);
-
-    const { error: profErr } = await supabase
-      .from('profiles')
-      .update({ role: 'scholar', scholar_id: scholarId })
-      .eq('id', userId);
-    if (profErr) throw new Error(`Couldn't set role: ${profErr.message}`);
+    // Fire both writes in parallel to cut latency roughly in half.
+    const [scholarRes, profileRes] = await Promise.all([
+      supabase.from('scholars').insert({
+        id: userId,
+        name,
+        title: 'Scholar',
+        specialties: [],
+        languages: [],
+        rating: 4.8,
+        reviews: 0,
+        price_per_session: 40,
+        session_minutes: 30,
+        photo: `https://i.pravatar.cc/300?u=${encodeURIComponent(email)}`,
+        bio: `${name} is a new scholar on ScholarConnect.`,
+        sort_order: 100,
+      }),
+      supabase
+        .from('profiles')
+        .update({ role: 'scholar', scholar_id: userId })
+        .eq('id', userId),
+    ]);
+    if (scholarRes.error) throw new Error(`Couldn't create scholar profile: ${scholarRes.error.message}`);
+    if (profileRes.error) throw new Error(`Couldn't set role: ${profileRes.error.message}`);
   }
-
-  return sessionFromSupabase(data.session);
 }
 
 export async function login({ email, password }) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
-  return sessionFromSupabase(data.session);
 }
 
 export async function logout() {
