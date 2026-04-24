@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signupUser } from '../store/auth.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -13,8 +15,11 @@ export default function Signup() {
     setError('');
     setBusy(true);
     try {
-      const session = await signupUser(form);
-      if (session?.role === 'scholar') {
+      await signupUser(form);
+      // Force AuthContext to re-read the profile — the auto-create trigger fired
+      // before we updated role to 'scholar', so the cached session would be stale.
+      const fresh = await refresh();
+      if (fresh?.role === 'scholar') {
         navigate('/dashboard', { replace: true });
       } else {
         navigate('/', { replace: true });
