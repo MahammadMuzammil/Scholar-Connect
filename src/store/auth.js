@@ -1,87 +1,57 @@
-const SESSION_KEY = 'scholar-connect:session';
-const USERS_KEY = 'scholar-connect:users';
+import { supabase } from '../lib/supabase.js';
+import { scholarIdByEmail } from '../data/scholars.js';
 
-function readSession() {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+// Shape the raw Supabase user into our app's session object.
+// Adds `role` and (for scholars) `scholarId` derived from the email mapping.
+export function sessionFromSupabase(supaSession) {
+  const user = supaSession?.user;
+  if (!user) return null;
+  const email = user.email;
+  const scholarId = email ? scholarIdByEmail(email) : null;
+  return {
+    role: scholarId ? 'scholar' : 'user',
+    id: scholarId || user.id,          // scholars identify as their scholar id (used to filter bookings)
+    authUserId: user.id,
+    scholarId,
+    name: user.user_metadata?.name || user.email?.split('@')[0] || 'Guest',
+    email,
+  };
 }
 
-function writeSession(session) {
-  if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  else localStorage.removeItem(SESSION_KEY);
-  window.dispatchEvent(new Event('session-updated'));
-}
-
-function readUsers() {
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-export function getSession() {
-  return readSession();
+export async function getSession() {
+  const { data } = await supabase.auth.getSession();
+  return sessionFromSupabase(data?.session);
 }
 
 export function subscribeSession(handler) {
-  const fn = () => handler(readSession());
-  window.addEventListener('session-updated', fn);
-  window.addEventListener('storage', fn);
-  return () => {
-    window.removeEventListener('session-updated', fn);
-    window.removeEventListener('storage', fn);
-  };
+  const { data } = supabase.auth.onAuthStateChange((_event, supaSession) => {
+    handler(sessionFromSupabase(supaSession));
+  });
+  return () => data.subscription.unsubscribe();
 }
 
-export function logout() {
-  writeSession(null);
-}
-
-export function signupUser({ name, email, password }) {
-  const users = readUsers();
-  if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-    throw new Error('An account with that email already exists.');
-  }
-  const user = {
-    id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    name,
+export async function signupUser({ name, email, password }) {
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-  };
-  users.push(user);
-  writeUsers(users);
-  const session = { role: 'user', id: user.id, name: user.name, email: user.email };
-  writeSession(session);
-  return session;
-}
-
-export function loginUser({ email, password }) {
-  const users = readUsers();
-  const user = users.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-  );
-  if (!user) throw new Error('Invalid email or password.');
-  const session = { role: 'user', id: user.id, name: user.name, email: user.email };
-  writeSession(session);
-  return session;
-}
-
-export function loginScholar({ scholarId, passcode }) {
-  // Demo passcode — in production, scholars would have real credentials.
-  if (passcode !== 'scholar123') {
-    throw new Error('Invalid passcode. (Demo: use scholar123)');
+    options: { data: { name } },
+  });
+  if (error) throw error;
+  if (!data.session) {
+    // Happens when email confirmation is ON — user must verify first.
+    throw new Error(
+      'Account created — please check your email to confirm. Or disable "Confirm email" in Supabase Authentication → Providers for dev.'
+    );
   }
-  const session = { role: 'scholar', id: scholarId };
-  writeSession(session);
-  return session;
+  return sessionFromSupabase(data.session);
+}
+
+export async function login({ email, password }) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return sessionFromSupabase(data.session);
+}
+
+export async function logout() {
+  await supabase.auth.signOut();
 }

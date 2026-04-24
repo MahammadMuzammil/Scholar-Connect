@@ -6,6 +6,32 @@ This app has two deployable pieces, both on the same Vercel project:
 
 Persistence lives in **Supabase** (managed Postgres + realtime).
 
+## 1a. One-time Supabase Auth setup
+
+ScholarConnect now uses Supabase Auth — passwords are hashed, sessions are JWTs, and login works across devices.
+
+### Disable email confirmation (for dev)
+Supabase by default requires users to click a confirmation link in their email before logging in. For a demo this is friction. Turn it off:
+
+1. Supabase dashboard → **Authentication → Providers**
+2. Expand **Email**
+3. Toggle **"Confirm email"** OFF → click **Save**
+
+### Pre-create the scholar accounts
+
+Scholars don't self-register. Create their auth accounts manually so they can log in:
+
+1. Supabase dashboard → **Authentication → Users**
+2. Click **"Add user"** → **"Create new user"**
+3. Email: `muzammil@scholarconnect.test` — Password: choose one and note it (e.g. `Muzammil#2003`)
+4. ✅ Check **"Auto Confirm User"**
+5. Click **Create user**
+6. Repeat for Farooq with email `farooq@scholarconnect.test`
+
+These two emails are the mapping keys in [src/data/scholars.js](src/data/scholars.js) (`SCHOLAR_EMAILS`). When someone signs in with either, the app routes them to the scholar dashboard instead of the marketplace.
+
+Pass the password to each scholar privately. They'll sign in at `/login` with their email + that password.
+
 ## 1. Create a Supabase project (10 min)
 
 1. Sign up at https://supabase.com (free tier).

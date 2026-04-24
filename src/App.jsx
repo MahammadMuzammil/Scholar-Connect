@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useSession } from './context/AuthContext.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
 import Nav from './components/Nav.jsx';
 import Greeting from './components/Greeting.jsx';
@@ -14,7 +14,14 @@ import Signup from './pages/Signup.jsx';
 import MyBookings from './pages/MyBookings.jsx';
 
 function RootRedirect() {
-  const session = useSession();
+  const { session, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '40px 0' }}>
+        <div className="empty">Loading…</div>
+      </div>
+    );
+  }
   if (!session) return <Navigate to="/login" replace />;
   if (session.role === 'scholar') return <Navigate to="/dashboard" replace />;
   return <Home />;
