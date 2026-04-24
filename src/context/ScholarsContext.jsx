@@ -13,12 +13,24 @@ export function ScholarsProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     setLoading(true);
-    listScholars()
-      .then((rows) => { setScholars(rows); setError(null); })
-      .catch((e) => setError(e.message || 'Failed to load scholars'))
-      .finally(() => setLoading(false));
+    // Retry once if the first attempt races with auth lock or a token refresh.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const rows = await listScholars();
+        setScholars(rows);
+        setError(null);
+        break;
+      } catch (e) {
+        if (attempt === 1) {
+          setError(e.message || 'Failed to load scholars');
+        } else {
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
