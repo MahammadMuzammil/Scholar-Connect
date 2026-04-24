@@ -19,8 +19,12 @@ function fmt(iso) {
 }
 
 function callUrl(bookingId, { asScholar = false } = {}) {
-  const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
-  const base = (process.env.PUBLIC_WEB_URL || vercelUrl || 'http://localhost:5173').replace(/\/$/, '');
+  // Prefer the production alias (unprotected) over the per-deploy URL (protected).
+  const prodUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : null;
+  const deployUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
+  const base = (process.env.PUBLIC_WEB_URL || prodUrl || deployUrl || 'http://localhost:5173').replace(/\/$/, '');
   // `?s=1` marks the visitor as the scholar so the video token is issued with owner privileges.
   return `${base}/call/${bookingId}${asScholar ? '?s=1' : ''}`;
 }
