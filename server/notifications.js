@@ -18,10 +18,11 @@ function fmt(iso) {
   });
 }
 
-function callUrl(bookingId) {
+function callUrl(bookingId, { asScholar = false } = {}) {
   const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
   const base = (process.env.PUBLIC_WEB_URL || vercelUrl || 'http://localhost:5173').replace(/\/$/, '');
-  return `${base}/call/${bookingId}`;
+  // `?s=1` marks the visitor as the scholar so the video token is issued with owner privileges.
+  return `${base}/call/${bookingId}${asScholar ? '?s=1' : ''}`;
 }
 
 function renderEmail(booking, scholar) {
@@ -34,7 +35,7 @@ function renderEmail(booking, scholar) {
     `Amount: $${booking.amount}${booking.postFajr ? ` (Golden Hour +${booking.premiumPercent}%)` : ''}`,
     booking.topic ? `Topic: ${booking.topic}` : '',
     ``,
-    `Join the call at the scheduled time: ${callUrl(booking.id)}`,
+    `Join the call at the scheduled time: ${callUrl(booking.id, { asScholar: true })}`,
   ].filter(Boolean).join('\n');
 
   const html = `
@@ -48,7 +49,7 @@ function renderEmail(booking, scholar) {
         ${booking.topic ? `<tr><td style="padding:6px 0;color:#666">Topic</td><td>${booking.topic}</td></tr>` : ''}
       </table>
       <p>
-        <a href="${callUrl(booking.id)}"
+        <a href="${callUrl(booking.id, { asScholar: true })}"
            style="display:inline-block;padding:10px 18px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none">
           Join the call
         </a>
@@ -74,7 +75,7 @@ function renderWhatsApp(booking, scholar) {
     ``,
     `Tap to join:`,
     ``,
-    callUrl(booking.id),
+    callUrl(booking.id, { asScholar: true }),
     ``,
     `(Opens 10 min before the scheduled time)`,
   ].filter(Boolean).join('\n');

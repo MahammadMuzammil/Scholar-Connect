@@ -80,14 +80,7 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/call/:bookingId"
-          element={
-            <RequireAuth>
-              <VideoCall />
-            </RequireAuth>
-          }
-        />
+        <Route path="/call/:bookingId" element={<VideoCall />} />
       </Routes>
       <footer className="container">ScholarConnect — a Shariah-compliant consultation marketplace</footer>
     </AuthProvider>

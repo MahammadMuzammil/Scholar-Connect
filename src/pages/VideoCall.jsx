@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useBooking } from '../hooks/useBooking.js';
 import { getCallWindow, formatCountdown } from '../lib/callWindow.js';
 import { useNow } from '../hooks/useNow.js';
@@ -19,9 +19,17 @@ function fmt(iso) {
 
 export default function VideoCall() {
   const { bookingId } = useParams();
+  const [sp] = useSearchParams();
   const { booking, loading, error } = useBooking(bookingId);
   const session = useSession();
   const now = useNow(1000);
+
+  // Role detection (in priority order):
+  //   1. `?s=1` in the URL → scholar (used in WhatsApp links to scholars)
+  //   2. logged-in scholar session → scholar
+  //   3. otherwise → user (guest or logged-in user)
+  const roleHint = sp.get('s') === '1' ? 'scholar' : null;
+  const isScholar = roleHint === 'scholar' || session?.role === 'scholar';
 
   const [vs, setVs] = useState(null);
   const [vsError, setVsError] = useState(null);
@@ -32,15 +40,14 @@ export default function VideoCall() {
   useEffect(() => {
     if (!booking || win?.status !== 'open' || vs || provisioning) return;
     setProvisioning(true);
-    const isScholar = session?.role === 'scholar';
     const displayName = isScholar
-      ? getScholar(session.id)?.name || 'Scholar'
+      ? getScholar(booking.scholarId)?.name || booking.scholarName || 'Scholar'
       : session?.name || booking.user?.name || 'Guest';
     requestVideoSession(booking, { displayName, isScholar })
       .then(setVs)
       .catch((err) => setVsError(err.message || 'Could not start the session.'))
       .finally(() => setProvisioning(false));
-  }, [booking, win?.status, session, vs, provisioning]);
+  }, [booking, win?.status, session, isScholar, vs, provisioning]);
 
   if (loading) {
     return (
@@ -70,9 +77,6 @@ export default function VideoCall() {
           </div>
         </div>
         <div className="inline">
-          <Link to={`/confirmation/${booking.id}`}>
-            <button className="ghost">Back to booking</button>
-          </Link>
           <Link to="/">
             <button>Home</button>
           </Link>
