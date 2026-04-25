@@ -75,27 +75,34 @@ function CartoonImam() {
       {/* Turban — small jewel/star */}
       <text x="110" y="68" textAnchor="middle" fontSize="18" fill="#fbbf24" fontFamily="serif">☪</text>
 
-      {/* Right arm — drawn raised in "wave" pose, animated to rock back and forth.
-          Pivot point lives at the right shoulder (~165, 205); see .imam-arm in CSS. */}
+      {/* Right arm — raised in wave pose. Pivot is the right shoulder (~175, 205);
+          see .imam-arm in CSS for the rocking animation. */}
       <g className="imam-arm">
-        {/* Sleeve curve from shoulder up toward the hand */}
+        {/* Sleeve — single thick stroked curve, consistent thickness from shoulder to wrist */}
         <path
-          d="M 158 210 Q 150 180 165 150 Q 180 128 200 120 Q 216 122 220 134 Q 210 145 195 154 Q 182 175 178 200 Q 173 213 165 213 Z"
-          fill="url(#imam-robe)"
-          stroke="#073d22"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        {/* Hand */}
-        <circle cx="208" cy="122" r="13" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="1.2" />
-        {/* Thumb hint */}
-        <path
-          d="M 218 117 Q 222 124 218 132"
-          stroke="#c9a07a"
-          strokeWidth="1.5"
-          fill="none"
+          d="M 175 205 Q 178 170 198 142"
+          stroke="url(#imam-robe)"
+          strokeWidth="22"
           strokeLinecap="round"
+          fill="none"
         />
+        {/* Cuff at the wrist */}
+        <ellipse cx="201" cy="142" rx="13" ry="5" fill="#073d22" />
+
+        {/* Hand — palm + four fingers + thumb. Drawn at origin, translated to wrist
+            and tilted slightly so it reads as "open hand waving". */}
+        <g transform="translate(207 128) rotate(12)">
+          {/* Palm */}
+          <ellipse cx="0" cy="0" rx="9" ry="11" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.8" />
+          {/* Pinky → index */}
+          <rect x="-7"   y="-19" width="3.2" height="11" rx="1.6"  fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          <rect x="-2.5" y="-21" width="3.4" height="13" rx="1.7"  fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          <rect x="2"    y="-20" width="3.3" height="12" rx="1.65" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          <rect x="6"    y="-16" width="3"   height="9"  rx="1.5"  fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          {/* Thumb */}
+          <ellipse cx="-9" cy="-1" rx="3.2" ry="5" transform="rotate(-25 -9 -1)"
+                   fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+        </g>
       </g>
     </svg>
   );

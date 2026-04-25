@@ -405,15 +405,15 @@ footer {
 
 /* Waving arm — pivots around the right shoulder. Starts when the speech bubble pops. */
 .imam-arm {
-  transform-origin: 162px 205px;
+  transform-origin: 175px 205px;
   animation: imam-wave 1700ms ease-in-out 1700ms 1 both;
 }
 @keyframes imam-wave {
   0%   { transform: rotate(0deg); }
-  15%  { transform: rotate(-22deg); }
-  35%  { transform: rotate(10deg); }
-  55%  { transform: rotate(-22deg); }
-  75%  { transform: rotate(10deg); }
+  15%  { transform: rotate(-18deg); }
+  35%  { transform: rotate(8deg); }
+  55%  { transform: rotate(-18deg); }
+  75%  { transform: rotate(8deg); }
   100% { transform: rotate(0deg); }
 }
 
