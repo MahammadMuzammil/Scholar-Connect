@@ -60,32 +60,26 @@ export async function signupUser({ name, email, password, role = 'user' }) {
     );
   }
 
+  // Scholar role requires admin approval — submit an application.
+  // The user is logged in as a regular 'user' until admin approves.
   if (role === 'scholar') {
     const userId = data.session.user.id;
-    // Fire both writes in parallel to cut latency roughly in half.
-    const [scholarRes, profileRes] = await Promise.all([
-      supabase.from('scholars').insert({
-        id: userId,
-        name,
-        title: 'Scholar',
-        specialties: [],
-        languages: [],
-        rating: 4.8,
-        reviews: 0,
-        price_per_session: 40,
-        session_minutes: 30,
-        photo: `https://i.pravatar.cc/300?u=${encodeURIComponent(email)}`,
-        bio: `${name} is a new scholar on ScholarConnect.`,
-        sort_order: 100,
-      }),
-      supabase
-        .from('profiles')
-        .update({ role: 'scholar', scholar_id: userId })
-        .eq('id', userId),
-    ]);
-    if (scholarRes.error) throw new Error(`Couldn't create scholar profile: ${scholarRes.error.message}`);
-    if (profileRes.error) throw new Error(`Couldn't set role: ${profileRes.error.message}`);
+    try {
+      const res = await fetch('/api/scholar-application', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, name, email }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body.message || 'Could not submit scholar application.');
+      }
+      return { applicationSubmitted: true, alreadyExists: body.alreadyExists };
+    } catch (err) {
+      throw new Error(`Application failed: ${err.message}`);
+    }
   }
+  return { applicationSubmitted: false };
 }
 
 export async function login({ email, password }) {

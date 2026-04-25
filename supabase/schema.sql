@@ -194,3 +194,37 @@ where id in (select id from auth.users where email = 'muzammil@scholarconnect.te
 update profiles
 set role = 'scholar', scholar_id = 'sh-farooq'
 where id in (select id from auth.users where email = 'farooq@scholarconnect.test');
+
+-- ──────────────── Scholar applications (admin approval) ────────────────
+-- Self-signup as scholar inserts a row here. Admin approves via email link
+-- (server uses service-role key to flip status + create scholar row).
+create table if not exists scholar_applications (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users on delete cascade not null unique,
+  name        text not null,
+  email       text not null,
+  status      text not null default 'pending' check (status in ('pending','approved','rejected')),
+  reviewed_at timestamptz,
+  notes       text,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists scholar_applications_status_idx on scholar_applications (status, created_at desc);
+
+alter table scholar_applications enable row level security;
+
+drop policy if exists "applications: self insert" on scholar_applications;
+create policy "applications: self insert"
+  on scholar_applications for insert
+  to authenticated
+  with check (user_id = auth.uid());
+
+drop policy if exists "applications: self read" on scholar_applications;
+create policy "applications: self read"
+  on scholar_applications for select
+  to authenticated
+  using (user_id = auth.uid());
+
+-- Lock down the previous wide-open scholar insert policy. Only the server
+-- (using service-role key) creates scholar rows now.
+drop policy if exists "scholars: authenticated insert" on scholars;

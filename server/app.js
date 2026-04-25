@@ -2,6 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import { provisionVideoSession } from './daily.js';
 import { notifyScholarBooked } from './notifications.js';
+import {
+  createApplicationAndNotify,
+  approveApplication,
+  approvalSuccessHtml,
+  approvalErrorHtml,
+} from './applications.js';
 
 // Demo mode: server allows token issuance for any future booking. Revert to
 // `10 * 60 * 1000` for production behavior.
@@ -54,6 +60,44 @@ export function createApp() {
     } catch (err) {
       console.error('[/api/video-session]', err);
       return res.status(500).json({ error: 'server_error', message: err.message });
+    }
+  });
+
+  // Scholar applies — server creates application row + emails admin.
+  app.post('/api/scholar-application', async (req, res) => {
+    try {
+      const { userId, name, email } = req.body || {};
+      if (!userId || !name || !email) {
+        return res.status(400).json({ error: 'userId, name, email required' });
+      }
+      const result = await createApplicationAndNotify({ userId, name, email }, req);
+      return res.json(result);
+    } catch (err) {
+      console.error('[/api/scholar-application]', err);
+      return res.status(500).json({ error: 'server_error', message: err.message });
+    }
+  });
+
+  // Admin clicks approve link from email.
+  app.get('/api/scholar-application/approve', async (req, res) => {
+    try {
+      const { id, token } = req.query;
+      if (!id || !token) {
+        res.status(400).set('Content-Type', 'text/html');
+        return res.send(approvalErrorHtml('Missing id or token in URL.'));
+      }
+      const result = await approveApplication({ id, token });
+      if (!result.ok) {
+        res.status(result.reason === 'invalid_token' ? 403 : 404)
+          .set('Content-Type', 'text/html');
+        return res.send(approvalErrorHtml(result.reason));
+      }
+      res.set('Content-Type', 'text/html');
+      return res.send(approvalSuccessHtml(result.application?.name || 'Scholar'));
+    } catch (err) {
+      console.error('[/api/scholar-application/approve]', err);
+      res.status(500).set('Content-Type', 'text/html');
+      return res.send(approvalErrorHtml(err.message));
     }
   });
 

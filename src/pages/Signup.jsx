@@ -10,22 +10,27 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [signedUp, setSignedUp] = useState(false);
+  const [pendingApplication, setPendingApplication] = useState(false);
 
   useEffect(() => {
     if (!signedUp || !session) return;
+    if (pendingApplication) return; // wait on the pending screen instead of navigating
     if (session.role === 'scholar') {
       navigate('/dashboard', { replace: true });
     } else {
       navigate('/', { replace: true });
     }
-  }, [signedUp, session, navigate]);
+  }, [signedUp, session, navigate, pendingApplication]);
 
   const submit = async (e) => {
     e.preventDefault();
     setError('');
     setBusy(true);
     try {
-      await signupUser(form);
+      const result = await signupUser(form);
+      if (result?.applicationSubmitted) {
+        setPendingApplication(true);
+      }
       setSignedUp(true);
     } catch (err) {
       setError(err.message || 'Sign-up failed.');
@@ -35,12 +40,45 @@ export default function Signup() {
 
   const selectRole = (role) => setForm((f) => ({ ...f, role }));
 
+  if (pendingApplication) {
+    return (
+      <div className="container" style={{ padding: '40px 0', maxWidth: 560 }}>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: 'rgba(245,158,11,.15)', border: '2px solid rgba(245,158,11,.5)',
+              display: 'grid', placeItems: 'center', margin: '0 auto 14px',
+              color: '#f59e0b', fontSize: 30,
+            }}
+          >
+            ⏳
+          </div>
+          <h2 style={{ margin: 0 }}>Application submitted</h2>
+          <p className="muted" style={{ marginTop: 10 }}>
+            Thank you, <strong>{form.name}</strong>. Your scholar application is now with the admin
+            for review. You'll be notified once approved.
+          </p>
+          <p className="muted" style={{ fontSize: 14 }}>
+            In the meantime your account works as a regular user — you can browse and book
+            sessions with other scholars.
+          </p>
+          <div className="inline" style={{ justifyContent: 'center', marginTop: 18 }}>
+            <Link to="/">
+              <button className="primary">Browse scholars</button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container" style={{ padding: '40px 0', maxWidth: 480 }}>
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Create your account</h2>
         <p className="muted" style={{ fontSize: 14, marginTop: -4, marginBottom: 16 }}>
-          Choose your role. You can book scholars as a user, or offer sessions as a scholar.
+          Choose your role. You can book scholars as a user, or apply to offer sessions as a scholar.
         </p>
 
         <div className="inline" style={{ gap: 8, marginBottom: 16 }}>
@@ -99,14 +137,18 @@ export default function Signup() {
 
           {form.role === 'scholar' && (
             <p className="muted" style={{ fontSize: 13, marginTop: -4, marginBottom: 14 }}>
-              You'll appear in the marketplace with a default profile — you can update your title,
-              bio, photo, and price later.
+              Scholar accounts require admin approval. After signing up, an email is sent to the
+              admin. Once approved, you'll see the scholar dashboard the next time you sign in.
             </p>
           )}
 
           {error && <p style={{ color: 'var(--danger)', fontSize: 14 }}>{error}</p>}
           <button className="primary" type="submit" disabled={busy} style={{ width: '100%' }}>
-            {busy ? 'Creating account…' : `Create ${form.role} account`}
+            {busy
+              ? 'Creating account…'
+              : form.role === 'scholar'
+                ? 'Submit scholar application'
+                : 'Create user account'}
           </button>
           <p className="muted" style={{ fontSize: 14, marginTop: 12 }}>
             Already have one? <Link to="/login" style={{ color: 'var(--text)' }}>Sign in</Link>
