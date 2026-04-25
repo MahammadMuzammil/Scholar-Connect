@@ -7,7 +7,10 @@ function publicWebUrl() {
 }
 
 function apiBaseUrl(req) {
-  // Use the request's own host so the approve link stays within this deployment.
+  // Prefer the stable production URL so links survive deployment hash changes
+  // and aren't blocked by Vercel deployment protection on per-deploy URLs.
+  const fromEnv = publicWebUrl();
+  if (fromEnv && !fromEnv.startsWith('http://localhost')) return fromEnv;
   const proto = req.headers['x-forwarded-proto'] || 'https';
   const host = req.headers.host;
   return `${proto}://${host}`;
