@@ -403,18 +403,19 @@ footer {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Waving arm — pivots around the right shoulder. Starts when the speech bubble pops. */
-.imam-arm {
-  transform-origin: 175px 205px;
-  animation: imam-wave 1700ms ease-in-out 1700ms 1 both;
+/* Salam gesture — slight forward bow of the whole figure, synced with the
+   speech bubble. Pivot at the bottom-center so the figure tips forward at the
+   waist rather than rotating around its middle. */
+.imam-bow {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation: imam-bow 2200ms ease-in-out 1700ms 1 both;
 }
-@keyframes imam-wave {
-  0%   { transform: rotate(0deg); }
-  15%  { transform: rotate(-18deg); }
-  35%  { transform: rotate(8deg); }
-  55%  { transform: rotate(-18deg); }
-  75%  { transform: rotate(8deg); }
-  100% { transform: rotate(0deg); }
+@keyframes imam-bow {
+  0%   { transform: rotate(0deg) translateY(0); }
+  35%  { transform: rotate(3deg)  translateY(4px); }
+  65%  { transform: rotate(3deg)  translateY(4px); }
+  100% { transform: rotate(0deg) translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -423,7 +424,7 @@ footer {
   .greeting-english,
   .greeting-subtitle,
   .imam-figure,
-  .imam-arm,
+  .imam-bow,
   .speech-bubble {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;

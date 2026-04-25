@@ -75,32 +75,33 @@ function CartoonImam() {
       {/* Turban — small jewel/star */}
       <text x="110" y="68" textAnchor="middle" fontSize="18" fill="#fbbf24" fontFamily="serif">☪</text>
 
-      {/* Right arm — raised in wave pose. Pivot is the right shoulder (~175, 205);
-          see .imam-arm in CSS for the rocking animation. */}
-      <g className="imam-arm">
-        {/* Sleeve — single thick stroked curve, consistent thickness from shoulder to wrist */}
+      {/* Right arm — bent at the elbow, hand raised at chest level with palm
+          facing the viewer. This is the salam gesture (peace greeting), not a
+          wave. The whole figure does a slight forward bow on .imam-bow. */}
+      <g>
+        {/* Sleeve — curves from right shoulder up and inward to chest-level wrist */}
         <path
-          d="M 175 205 Q 178 170 198 142"
+          d="M 175 200 Q 200 175 150 168"
           stroke="url(#imam-robe)"
           strokeWidth="22"
           strokeLinecap="round"
           fill="none"
         />
-        {/* Cuff at the wrist */}
-        <ellipse cx="201" cy="142" rx="13" ry="5" fill="#073d22" />
+        {/* Cuff where the sleeve meets the wrist */}
+        <ellipse cx="153" cy="170" rx="13" ry="5" fill="#073d22" transform="rotate(-8 153 170)" />
 
-        {/* Hand — palm + four fingers + thumb. Drawn at origin, translated to wrist
-            and tilted slightly so it reads as "open hand waving". */}
-        <g transform="translate(207 128) rotate(12)">
+        {/* Hand — palm forward (facing viewer), fingers up, thumb out to the side.
+            This reads as "raised hand in greeting / peace". */}
+        <g transform="translate(146 158)">
           {/* Palm */}
-          <ellipse cx="0" cy="0" rx="9" ry="11" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.8" />
-          {/* Pinky → index */}
-          <rect x="-7"   y="-19" width="3.2" height="11" rx="1.6"  fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
-          <rect x="-2.5" y="-21" width="3.4" height="13" rx="1.7"  fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
-          <rect x="2"    y="-20" width="3.3" height="12" rx="1.65" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
-          <rect x="6"    y="-16" width="3"   height="9"  rx="1.5"  fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
-          {/* Thumb */}
-          <ellipse cx="-9" cy="-1" rx="3.2" ry="5" transform="rotate(-25 -9 -1)"
+          <ellipse cx="0" cy="0" rx="11" ry="13" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.8" />
+          {/* Four fingers extending up */}
+          <rect x="-8.5" y="-23" width="3.6" height="13" rx="1.8" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          <rect x="-3.5" y="-25" width="3.6" height="15" rx="1.8" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          <rect x="1"    y="-24" width="3.6" height="14" rx="1.8" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          <rect x="5.5"  y="-20" width="3.4" height="11" rx="1.6" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
+          {/* Thumb to the side */}
+          <ellipse cx="-13" cy="-3" rx="3.4" ry="6" transform="rotate(-15 -13 -3)"
                    fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="0.6" />
         </g>
       </g>
@@ -143,7 +144,9 @@ export default function Greeting() {
     >
       <div className="greeting-inner">
         <div className="imam-stage">
-          <CartoonImam />
+          <div className="imam-bow">
+            <CartoonImam />
+          </div>
           <div className="speech-bubble" aria-hidden="true">Assalamualaikum!</div>
         </div>
 
