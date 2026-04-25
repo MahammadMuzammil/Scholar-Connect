@@ -88,17 +88,17 @@ function renderWhatsApp(booking, scholar) {
 function renderAdminWhatsApp(booking, scholar) {
   const premium = booking.postFajr ? ` (Golden Hour +${booking.premiumPercent}%)` : '';
   return [
-    `💸 *New payment to verify*`,
+    `💸 *New booking — verify payment*`,
     ``,
     `Booking: ${booking.id}`,
     `Scholar: ${scholar?.name || booking.scholarId}`,
     `User: ${booking.user?.name || 'Anonymous'} <${booking.user?.email || ''}>`,
     `📅 ${fmt(booking.slotStartsAt)}`,
     `💰 $${booking.amount}${premium}`,
-    booking.transactionId ? `🧾 UTR / Txn ID: *${booking.transactionId}*` : `🧾 UTR / Txn ID: (not provided)`,
+    booking.topic ? `📝 ${booking.topic}` : null,
     ``,
-    `Open PhonePe → search this UTR → confirm the amount, then mark the booking confirmed.`,
-  ].join('\n');
+    `Check PhonePe for an incoming payment around this amount + time.`,
+  ].filter(Boolean).join('\n');
 }
 
 async function sendEmail(booking, scholar) {

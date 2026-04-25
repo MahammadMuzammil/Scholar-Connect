@@ -31,7 +31,7 @@ export default function Booking() {
     return generateSlots(scholar.id).find((s) => s.id === slotId) || null;
   }, [scholar, slotId]);
 
-  const [form, setForm] = useState({ topic: '', transactionId: '' });
+  const [form, setForm] = useState({ topic: '' });
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -69,13 +69,6 @@ export default function Booking() {
   const submit = async (e) => {
     e.preventDefault();
     setSubmitError('');
-
-    const txn = form.transactionId.trim();
-    if (txn.length < 6) {
-      setSubmitError('Please enter the PhonePe transaction / UTR ID after paying.');
-      return;
-    }
-
     setProcessing(true);
     try {
       const booking = await createBooking({
@@ -91,8 +84,6 @@ export default function Booking() {
         userId: session.id,
         user: { name: session.name, email: session.email },
         topic: form.topic,
-        transactionId: txn,
-        status: 'pending_verification',
       });
       notifyBookingCreated(booking);
       navigate(`/confirmation/${booking.id}`);
@@ -159,25 +150,10 @@ export default function Booking() {
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
             <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>
-              Paying MUJAMMIL M · After paying, copy the 12-digit UTR / transaction ID from the
-              PhonePe success screen and paste it below.
+              Paying MUJAMMIL M · Pay the amount above, then click the button below to confirm
+              your booking.
             </div>
           </div>
-
-          <div className="field" style={{ marginTop: 14 }}>
-            <label>PhonePe transaction / UTR ID</label>
-            <input
-              value={form.transactionId}
-              onChange={(e) => setForm({ ...form, transactionId: e.target.value })}
-              placeholder="e.g. 412345678912"
-              inputMode="numeric"
-              autoComplete="off"
-              required
-            />
-          </div>
-          <p className="muted" style={{ fontSize: 12, marginTop: -6 }}>
-            Your booking will be marked <strong>pending verification</strong> until we confirm the payment.
-          </p>
 
           {submitError && (
             <p style={{ color: 'var(--danger)', fontSize: 14 }}>{submitError}</p>
