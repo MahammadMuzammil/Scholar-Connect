@@ -1,16 +1,80 @@
 import { useEffect, useState } from 'react';
-import { Player } from '@lottiefiles/react-lottie-player';
 
 const KEY = 'imam-connect:greeted';
 
-// Drop a Lottie JSON file at scholar-connect/public/salam.json — anything from
-// LottieFiles works (search "muslim greeting", "salam", "praying"). If the file
-// is missing the greeting falls back to a simple emoji so nothing breaks.
-const LOTTIE_SRC = '/salam.json';
-
-function ImamFallback() {
+function CartoonImam() {
   return (
-    <div className="imam-fallback" aria-hidden="true">🤲</div>
+    <svg
+      className="imam-figure"
+      viewBox="0 0 220 260"
+      width="180"
+      height="212"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="imam-skin" cx="50%" cy="40%" r="60%">
+          <stop offset="0%"  stopColor="#fbe4cf" />
+          <stop offset="100%" stopColor="#e7c5a4" />
+        </radialGradient>
+        <linearGradient id="imam-turban" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stopColor="#f8fafc" />
+          <stop offset="100%" stopColor="#cbd5e1" />
+        </linearGradient>
+        <linearGradient id="imam-robe" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%"  stopColor="#0e7c47" />
+          <stop offset="100%" stopColor="#085c33" />
+        </linearGradient>
+      </defs>
+
+      {/* Robe / shoulders */}
+      <path
+        d="M 35 250 Q 40 195 110 195 Q 180 195 185 250 Z"
+        fill="url(#imam-robe)"
+        stroke="#073d22" strokeWidth="2"
+      />
+
+      {/* Neck */}
+      <rect x="98" y="170" width="24" height="20" rx="4" fill="url(#imam-skin)" />
+
+      {/* Head */}
+      <ellipse cx="110" cy="125" rx="55" ry="62" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="1" />
+
+      {/* Beard */}
+      <path
+        d="M 56 140 Q 65 215 110 215 Q 155 215 164 140 Q 158 185 110 195 Q 62 185 56 140 Z"
+        fill="#2a221f"
+      />
+      <path
+        d="M 70 155 Q 110 175 150 155 Q 130 175 110 178 Q 90 175 70 155 Z"
+        fill="#3a2e2a"
+        opacity="0.6"
+      />
+
+      {/* Eyebrows */}
+      <path d="M 72 100 Q 82 92 92 100" stroke="#2a221f" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+      <path d="M 128 100 Q 138 92 148 100" stroke="#2a221f" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+
+      {/* Eyes */}
+      <circle cx="82" cy="115" r="4.5" fill="#111827" />
+      <circle cx="138" cy="115" r="4.5" fill="#111827" />
+      <circle cx="83.5" cy="113" r="1.5" fill="#fff" />
+      <circle cx="139.5" cy="113" r="1.5" fill="#fff" />
+
+      {/* Smile */}
+      <path d="M 90 150 Q 110 162 130 150" stroke="#1e293b" strokeWidth="3" fill="none" strokeLinecap="round"/>
+
+      {/* Turban — bottom band */}
+      <ellipse cx="110" cy="78" rx="68" ry="22" fill="url(#imam-turban)" stroke="#94a3b8" strokeWidth="1.5"/>
+      {/* Turban — top */}
+      <ellipse cx="110" cy="60" rx="58" ry="28" fill="url(#imam-turban)" stroke="#94a3b8" strokeWidth="1.5"/>
+      <path
+        d="M 60 70 Q 110 38 160 70 L 160 78 Q 110 58 60 78 Z"
+        fill="#0e7c47"
+        opacity="0.85"
+      />
+      {/* Turban — small jewel/star */}
+      <text x="110" y="68" textAnchor="middle" fontSize="18" fill="#fbbf24" fontFamily="serif">☪</text>
+    </svg>
   );
 }
 
@@ -19,7 +83,6 @@ export default function Greeting() {
     try { return sessionStorage.getItem(KEY) !== '1'; } catch { return true; }
   });
   const [leaving, setLeaving] = useState(false);
-  const [lottieFailed, setLottieFailed] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
@@ -50,21 +113,7 @@ export default function Greeting() {
     >
       <div className="greeting-inner">
         <div className="imam-stage">
-          <div className="imam-lottie-wrap">
-            {lottieFailed ? (
-              <ImamFallback />
-            ) : (
-              <Player
-                autoplay
-                loop
-                src={LOTTIE_SRC}
-                style={{ width: 240, height: 240 }}
-                onEvent={(event) => {
-                  if (event === 'error') setLottieFailed(true);
-                }}
-              />
-            )}
-          </div>
+          <CartoonImam />
           <div className="speech-bubble" aria-hidden="true">Assalamualaikum!</div>
         </div>
 

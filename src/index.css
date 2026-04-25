@@ -291,23 +291,11 @@ footer {
   margin-bottom: 18px;
   perspective: 800px;
 }
-.imam-lottie-wrap {
+.imam-figure {
   display: block;
   margin: 0 auto;
-  filter: drop-shadow(0 12px 40px rgba(245,158,11,.25));
-  animation: imam-fade-in 600ms ease-out both;
-}
-.imam-fallback {
-  width: 240px;
-  height: 240px;
-  display: grid;
-  place-items: center;
-  font-size: 120px;
-  filter: drop-shadow(0 12px 40px rgba(245,158,11,.25));
-}
-@keyframes imam-fade-in {
-  from { opacity: 0; transform: translateY(12px) scale(.94); }
-  to   { opacity: 1; transform: none; }
+  filter: drop-shadow(0 12px 40px rgba(245,158,11,.35));
+  animation: imam-whirl-in 1700ms cubic-bezier(.16,.84,.34,1.05) both;
 }
 .speech-bubble {
   position: absolute;
@@ -394,6 +382,23 @@ footer {
 @keyframes fade-in {
   to { opacity: 1; }
 }
+@keyframes imam-whirl-in {
+  0% {
+    opacity: 0;
+    transform: translateX(140vw) rotate(-1080deg) scale(0.2);
+  }
+  55% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg) scale(1.18);
+  }
+  75% {
+    transform: translateX(0) rotate(0deg) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+}
 @keyframes bubble-pop {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
@@ -403,7 +408,7 @@ footer {
   .greeting-arabic,
   .greeting-english,
   .greeting-subtitle,
-  .imam-lottie-wrap,
+  .imam-figure,
   .speech-bubble {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
