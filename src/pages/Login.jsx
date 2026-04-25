@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../store/auth.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refresh } = useAuth();
   const redirectTo = location.state?.from?.pathname;
 
   const [form, setForm] = useState({ email: '', password: '' });
@@ -17,8 +19,10 @@ export default function Login() {
     setBusy(true);
     try {
       await login(form);
-      // Navigate immediately. RootRedirect waits for AuthContext's session
-      // to populate (it shows a loading state) and then routes based on role.
+      // Pull the session + profile into AuthContext before navigating, so the
+      // destination route doesn't render with stale `session: null` and bounce
+      // back to /login.
+      await refresh();
       navigate(redirectTo || '/', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-in failed.');

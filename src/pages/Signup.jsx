@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signupUser } from '../store/auth.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,7 +21,9 @@ export default function Signup() {
         setPendingApplication(true);
         return;
       }
-      // Navigate immediately — RootRedirect waits for AuthContext to populate.
+      // Pull the session + profile into AuthContext before navigating, so the
+      // home page doesn't render with stale `session: null` and bounce to /login.
+      await refresh();
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-up failed.');
