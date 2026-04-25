@@ -31,7 +31,7 @@ export default function Booking() {
     return generateSlots(scholar.id).find((s) => s.id === slotId) || null;
   }, [scholar, slotId]);
 
-  const [form, setForm] = useState({ topic: '', card: '4242 4242 4242 4242' });
+  const [form, setForm] = useState({ topic: '', transactionId: '' });
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -69,10 +69,15 @@ export default function Booking() {
   const submit = async (e) => {
     e.preventDefault();
     setSubmitError('');
+
+    const txn = form.transactionId.trim();
+    if (txn.length < 6) {
+      setSubmitError('Please enter the PhonePe transaction / UTR ID after paying.');
+      return;
+    }
+
     setProcessing(true);
     try {
-      // Simulate a ~900ms "payment" delay for realism.
-      await new Promise((r) => setTimeout(r, 900));
       const booking = await createBooking({
         scholarId: scholar.id,
         scholarName: scholar.name,
@@ -86,6 +91,8 @@ export default function Booking() {
         userId: session.id,
         user: { name: session.name, email: session.email },
         topic: form.topic,
+        transactionId: txn,
+        status: 'pending_verification',
       });
       notifyBookingCreated(booking);
       navigate(`/confirmation/${booking.id}`);
@@ -123,17 +130,53 @@ export default function Booking() {
             />
           </div>
 
-          <h3>Payment (mock)</h3>
-          <div className="field">
-            <label>Card number</label>
+          <h3>Payment</h3>
+          <div
+            className="stack"
+            style={{
+              alignItems: 'center',
+              padding: 16,
+              background: 'var(--bg-soft)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              gap: 10,
+            }}
+          >
+            <div className="muted" style={{ fontSize: 13, textAlign: 'center' }}>
+              Scan with PhonePe (or any UPI app) and pay
+            </div>
+            <div style={{ fontWeight: 700, fontSize: 22 }}>${pricing.price}</div>
+            <img
+              src="/payment-qr.png"
+              alt="PhonePe QR — pay MUJAMMIL M"
+              style={{
+                width: '100%',
+                maxWidth: 260,
+                borderRadius: 8,
+                background: '#000',
+                display: 'block',
+              }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+            <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>
+              Paying MUJAMMIL M · After paying, copy the 12-digit UTR / transaction ID from the
+              PhonePe success screen and paste it below.
+            </div>
+          </div>
+
+          <div className="field" style={{ marginTop: 14 }}>
+            <label>PhonePe transaction / UTR ID</label>
             <input
-              value={form.card}
-              onChange={(e) => setForm({ ...form, card: e.target.value })}
-              placeholder="4242 4242 4242 4242"
+              value={form.transactionId}
+              onChange={(e) => setForm({ ...form, transactionId: e.target.value })}
+              placeholder="e.g. 412345678912"
+              inputMode="numeric"
+              autoComplete="off"
+              required
             />
           </div>
-          <p className="muted" style={{ fontSize: 13, marginTop: -6 }}>
-            No real charge. In production this would use Stripe / Razorpay.
+          <p className="muted" style={{ fontSize: 12, marginTop: -6 }}>
+            Your booking will be marked <strong>pending verification</strong> until we confirm the payment.
           </p>
 
           {submitError && (
@@ -141,7 +184,7 @@ export default function Booking() {
           )}
 
           <button className="primary" type="submit" disabled={processing} style={{ width: '100%', marginTop: 10 }}>
-            {processing ? 'Processing…' : `Pay $${pricing.price} & confirm`}
+            {processing ? 'Submitting…' : `I've paid $${pricing.price} — confirm booking`}
           </button>
         </form>
 

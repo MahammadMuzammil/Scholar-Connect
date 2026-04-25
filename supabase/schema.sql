@@ -22,9 +22,13 @@ create table if not exists bookings (
   room_id        text not null,
   status         text not null default 'confirmed',
   read           boolean not null default false,
+  transaction_id text,           -- PhonePe UTR / reference entered by user
   created_at     timestamptz not null default now(),
   unique (scholar_id, slot_id)  -- one booking per slot per scholar
 );
+
+-- For installs that already have the bookings table, add the column non-destructively.
+alter table bookings add column if not exists transaction_id text;
 
 create index if not exists bookings_user_idx    on bookings (user_id, created_at desc);
 create index if not exists bookings_scholar_idx on bookings (scholar_id, created_at desc);
@@ -74,11 +78,15 @@ create table if not exists scholars (
   session_minutes     int not null default 30,
   photo               text,
   bio                 text,
+  phone               text,
   verified            boolean not null default true,
   active              boolean not null default true,   -- set to false to hide from marketplace
   sort_order          int default 0,
   created_at          timestamptz not null default now()
 );
+
+-- For installs that already have the scholars table, add the column non-destructively.
+alter table scholars add column if not exists phone text;
 
 alter table scholars enable row level security;
 
@@ -97,7 +105,7 @@ create policy "scholars: authenticated insert"
   with check (true);
 
 -- Seed current scholars. On conflict (re-run), update public fields.
-insert into scholars (id, name, title, specialties, languages, rating, reviews, price_per_session, session_minutes, photo, bio, sort_order)
+insert into scholars (id, name, title, specialties, languages, rating, reviews, price_per_session, session_minutes, photo, bio, phone, sort_order)
 values
   ('sh-muzammil',
    'Sheikh Muzammil',
@@ -107,6 +115,7 @@ values
    4.9, 1420, 40, 30,
    'https://i.pravatar.cc/300?img=12',
    'Specializes in contemporary fiqh issues, family rulings, and guidance during Ramadan. Trained in the classical Hanafi tradition with 15+ years of teaching.',
+   '+919652446584',
    10),
   ('sh-farooq',
    'Sheikh Farooq',
@@ -116,6 +125,7 @@ values
    4.8, 980, 50, 30,
    'https://i.pravatar.cc/300?img=33',
    'Teaches aqeedah and Prophetic biography at an international Islamic institute. Also provides Shariah-grounded dream interpretation in the tradition of Imam Ibn Sirin.',
+   '+919985573482',
    20)
 on conflict (id) do update set
   name              = excluded.name,
@@ -128,6 +138,7 @@ on conflict (id) do update set
   session_minutes   = excluded.session_minutes,
   photo             = excluded.photo,
   bio               = excluded.bio,
+  phone             = excluded.phone,
   sort_order        = excluded.sort_order;
 
 -- ──────────────── Profiles (roles) ────────────────

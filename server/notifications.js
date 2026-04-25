@@ -85,6 +85,22 @@ function renderWhatsApp(booking, scholar) {
   ].filter(Boolean).join('\n');
 }
 
+function renderAdminWhatsApp(booking, scholar) {
+  const premium = booking.postFajr ? ` (Golden Hour +${booking.premiumPercent}%)` : '';
+  return [
+    `💸 *New payment to verify*`,
+    ``,
+    `Booking: ${booking.id}`,
+    `Scholar: ${scholar?.name || booking.scholarId}`,
+    `User: ${booking.user?.name || 'Anonymous'} <${booking.user?.email || ''}>`,
+    `📅 ${fmt(booking.slotStartsAt)}`,
+    `💰 $${booking.amount}${premium}`,
+    booking.transactionId ? `🧾 UTR / Txn ID: *${booking.transactionId}*` : `🧾 UTR / Txn ID: (not provided)`,
+    ``,
+    `Open PhonePe → search this UTR → confirm the amount, then mark the booking confirmed.`,
+  ].join('\n');
+}
+
 async function sendEmail(booking, scholar) {
   const email = renderEmail(booking, scholar);
 
@@ -120,21 +136,20 @@ async function sendEmail(booking, scholar) {
   return { sent: true, channel: 'email', mode: 'resend', to: scholar.email, id: data.id };
 }
 
-async function sendWhatsApp(booking, scholar) {
-  const message = renderWhatsApp(booking, scholar);
+async function postTwilioWhatsApp(toPhone, message, label = 'whatsapp') {
   const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM } = process.env;
 
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_FROM) {
-    console.log('\n--- [whatsapp] Twilio env not set, logging message ---');
-    console.log(`To: ${scholar.name} (WhatsApp ${scholar.whatsapp})\n`);
+    console.log(`\n--- [${label}] Twilio env not set, logging message ---`);
+    console.log(`To: ${toPhone}\n`);
     console.log(message);
     console.log('-------------------------------------------------------\n');
-    return { sent: false, channel: 'whatsapp', mode: 'console', to: scholar.whatsapp };
+    return { sent: false, channel: label, mode: 'console', to: toPhone };
   }
 
   const body = new URLSearchParams({
     From: `whatsapp:${TWILIO_WHATSAPP_FROM}`,
-    To: `whatsapp:${scholar.whatsapp}`,
+    To: `whatsapp:${toPhone}`,
     Body: message,
   });
 
@@ -157,7 +172,19 @@ async function sendWhatsApp(booking, scholar) {
     throw new Error(`Twilio ${res.status}: ${text}`);
   }
   const data = await res.json();
-  return { sent: true, channel: 'whatsapp', mode: 'twilio', to: scholar.whatsapp, sid: data.sid };
+  return { sent: true, channel: label, mode: 'twilio', to: toPhone, sid: data.sid };
+}
+
+function sendWhatsApp(booking, scholar) {
+  return postTwilioWhatsApp(scholar.whatsapp, renderWhatsApp(booking, scholar), 'whatsapp');
+}
+
+async function sendAdminWhatsApp(booking, scholar) {
+  const adminPhone = process.env.ADMIN_WHATSAPP;
+  if (!adminPhone) {
+    return { sent: false, channel: 'admin_whatsapp', reason: 'ADMIN_WHATSAPP not set' };
+  }
+  return postTwilioWhatsApp(adminPhone, renderAdminWhatsApp(booking, scholar), 'admin_whatsapp');
 }
 
 export async function notifyScholarBooked(booking) {
@@ -167,10 +194,12 @@ export async function notifyScholarBooked(booking) {
   const results = await Promise.allSettled([
     sendEmail(booking, scholar),
     sendWhatsApp(booking, scholar),
+    sendAdminWhatsApp(booking, scholar),
   ]);
 
   return {
     email: results[0].status === 'fulfilled' ? results[0].value : { sent: false, channel: 'email', error: results[0].reason?.message },
     whatsapp: results[1].status === 'fulfilled' ? results[1].value : { sent: false, channel: 'whatsapp', error: results[1].reason?.message },
+    adminWhatsapp: results[2].status === 'fulfilled' ? results[2].value : { sent: false, channel: 'admin_whatsapp', error: results[2].reason?.message },
   };
 }

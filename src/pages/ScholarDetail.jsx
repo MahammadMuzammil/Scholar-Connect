@@ -153,6 +153,30 @@ export default function ScholarDetail() {
             <li>Shariah-compliant guidance</li>
             <li>Reschedule up to 4 hours before</li>
           </ul>
+          {scholar.phone && (
+            <>
+              <hr style={{ border: 0, borderTop: '1px solid var(--border)', margin: '16px 0' }} />
+              <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>
+                Questions before booking?
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 10 }}>
+                {scholar.phone}
+              </div>
+              <div className="inline" style={{ gap: 8 }}>
+                <a href={`tel:${scholar.phone}`} style={{ flex: 1 }}>
+                  <button className="ghost" style={{ width: '100%' }}>📞 Call</button>
+                </a>
+                <a
+                  href={`https://wa.me/${scholar.phone.replace(/[^\d]/g, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ flex: 1 }}
+                >
+                  <button className="ghost" style={{ width: '100%' }}>💬 WhatsApp</button>
+                </a>
+              </div>
+            </>
+          )}
           <Link to="/">
             <button className="ghost" style={{ marginTop: 10, width: '100%' }}>
               ← Back to all scholars

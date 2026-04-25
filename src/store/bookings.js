@@ -19,6 +19,7 @@ function fromRow(row) {
     roomId: row.room_id,
     status: row.status,
     read: row.read,
+    transactionId: row.transaction_id,
     createdAt: row.created_at,
   };
 }
@@ -42,6 +43,7 @@ function toRow(booking) {
     room_id: booking.roomId,
     status: booking.status || 'confirmed',
     read: Boolean(booking.read),
+    transaction_id: booking.transactionId || null,
   };
 }
 

@@ -14,6 +14,7 @@ function fromRow(row) {
     sessionMinutes: row.session_minutes,
     photo: row.photo,
     bio: row.bio,
+    phone: row.phone,
     verified: row.verified,
     active: row.active,
   };
