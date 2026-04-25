@@ -61,14 +61,18 @@ async function createMeetingToken({ roomName, displayName, isOwner, closeAt }) {
 }
 
 export async function provisionVideoSession({ bookingId, closeAt, displayName, isScholar }) {
-  if (!apiKey() || !domain()) {
-    // Fallback: use public Jitsi. No server-issued token — clearly marked as dev fallback.
+  // Force Jitsi (env override) — useful when you want to skip Daily.co billing.
+  const forceJitsi = String(process.env.USE_JITSI || '').toLowerCase() === 'true';
+
+  if (forceJitsi || !apiKey() || !domain()) {
     const roomId = `scholar-connect-${roomNameFor(bookingId)}`;
     const name = encodeURIComponent(displayName || 'Guest');
     return {
       provider: 'jitsi',
       roomUrl: `https://meet.jit.si/${roomId}#userInfo.displayName=%22${name}%22&config.prejoinPageEnabled=false`,
-      warning: 'DAILY_API_KEY or DAILY_DOMAIN not set — using unauthenticated Jitsi fallback.',
+      warning: forceJitsi
+        ? null  // intentional choice, no warning
+        : 'DAILY_API_KEY or DAILY_DOMAIN not set — using unauthenticated Jitsi fallback.',
     };
   }
 
