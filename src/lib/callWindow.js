@@ -1,4 +1,6 @@
-const OPEN_BEFORE_MS = 10 * 60 * 1000;
+// Demo mode: lets users join any future booking immediately. Revert to
+// `10 * 60 * 1000` (10 min before slot) for production behavior.
+const OPEN_BEFORE_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
 const GRACE_AFTER_MS = 15 * 60 * 1000;
 
 export function getCallWindow(booking, now = Date.now()) {

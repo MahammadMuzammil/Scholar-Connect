@@ -3,7 +3,9 @@ import cors from 'cors';
 import { provisionVideoSession } from './daily.js';
 import { notifyScholarBooked } from './notifications.js';
 
-const OPEN_BEFORE_MS = 10 * 60 * 1000;
+// Demo mode: server allows token issuance for any future booking. Revert to
+// `10 * 60 * 1000` for production behavior.
+const OPEN_BEFORE_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
 const GRACE_AFTER_MS = 15 * 60 * 1000;
 
 export function createApp() {
