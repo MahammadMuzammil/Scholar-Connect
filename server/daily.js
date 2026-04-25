@@ -67,9 +67,11 @@ export async function provisionVideoSession({ bookingId, closeAt, displayName, i
   if (forceJitsi || !apiKey() || !domain()) {
     const roomId = `scholar-connect-${roomNameFor(bookingId)}`;
     const name = encodeURIComponent(displayName || 'Guest');
+    // prejoinPageEnabled=true so users can test camera/mic before joining.
+    // startWithAudioMuted=false so they enter unmuted by default.
     return {
       provider: 'jitsi',
-      roomUrl: `https://meet.jit.si/${roomId}#userInfo.displayName=%22${name}%22&config.prejoinPageEnabled=false`,
+      roomUrl: `https://meet.jit.si/${roomId}#userInfo.displayName=%22${name}%22&config.prejoinPageEnabled=true&config.startWithAudioMuted=false&config.startWithVideoMuted=false`,
       warning: forceJitsi
         ? null  // intentional choice, no warning
         : 'DAILY_API_KEY or DAILY_DOMAIN not set — using unauthenticated Jitsi fallback.',

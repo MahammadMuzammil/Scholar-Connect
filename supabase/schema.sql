@@ -102,7 +102,7 @@ values
   ('sh-muzammil',
    'Sheikh Muzammil',
    'Mufti & Islamic Jurisprudence Scholar',
-   array[c'Fiqh', 'Family Matters', 'Ramadan Rulings'],
+   array['Fiqh', 'Family Matters', 'Ramadan Rulings'],
    array['Urdu', 'Arabic', 'English'],
    4.9, 1420, 40, 30,
    'https://i.pravatar.cc/300?img=12',
