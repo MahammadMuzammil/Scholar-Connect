@@ -1,28 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../store/auth.js';
-import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session } = useAuth();
   const redirectTo = location.state?.from?.pathname;
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
-
-  // Once the AuthContext session populates after sign-in, navigate.
-  useEffect(() => {
-    if (!signedIn || !session) return;
-    if (session.role === 'scholar') {
-      navigate('/dashboard', { replace: true });
-    } else {
-      navigate(redirectTo || '/', { replace: true });
-    }
-  }, [signedIn, session, navigate, redirectTo]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -30,7 +17,9 @@ export default function Login() {
     setBusy(true);
     try {
       await login(form);
-      setSignedIn(true);
+      // Navigate immediately. RootRedirect waits for AuthContext's session
+      // to populate (it shows a loading state) and then routes based on role.
+      navigate(redirectTo || '/', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-in failed.');
       setBusy(false);

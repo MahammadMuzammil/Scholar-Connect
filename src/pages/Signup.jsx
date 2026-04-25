@@ -1,26 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signupUser } from '../store/auth.js';
-import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { session } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [signedUp, setSignedUp] = useState(false);
   const [pendingApplication, setPendingApplication] = useState(false);
-
-  useEffect(() => {
-    if (!signedUp || !session) return;
-    if (pendingApplication) return; // wait on the pending screen instead of navigating
-    if (session.role === 'scholar') {
-      navigate('/dashboard', { replace: true });
-    } else {
-      navigate('/', { replace: true });
-    }
-  }, [signedUp, session, navigate, pendingApplication]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -30,8 +17,10 @@ export default function Signup() {
       const result = await signupUser(form);
       if (result?.applicationSubmitted) {
         setPendingApplication(true);
+        return;
       }
-      setSignedUp(true);
+      // Navigate immediately — RootRedirect waits for AuthContext to populate.
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-up failed.');
       setBusy(false);

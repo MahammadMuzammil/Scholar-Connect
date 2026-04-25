@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { ScholarsProvider } from './context/ScholarsContext.jsx';
+import { supabase } from './lib/supabase.js';
 import RequireAuth from './components/RequireAuth.jsx';
 import Nav from './components/Nav.jsx';
 import Greeting from './components/Greeting.jsx';
@@ -16,7 +18,22 @@ import MyBookings from './pages/MyBookings.jsx';
 
 function RootRedirect() {
   const { session, loading } = useAuth();
-  if (loading) {
+  const [supaSessionState, setSupaSessionState] = useState({ checked: false, hasSession: false });
+
+  // After the user signs in, supabase has a session in memory immediately, but
+  // AuthContext takes a moment to fetch the profile and update React state.
+  // Don't redirect to /login during that gap.
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setSupaSessionState({ checked: true, hasSession: !!data?.session });
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const stillResolving = loading || !supaSessionState.checked || (supaSessionState.hasSession && !session);
+
+  if (stillResolving) {
     return (
       <div className="container" style={{ padding: '40px 0' }}>
         <div className="empty">Loading…</div>
