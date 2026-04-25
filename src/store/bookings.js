@@ -120,8 +120,12 @@ export async function markRead(id) {
 // Realtime subscription — fires whenever any booking row changes.
 // Pass a filter (e.g., { scholarId } or { userId }) to scope it.
 export function subscribeBookings({ scholarId, userId } = {}, onChange) {
+  // Each subscription gets its own channel — Supabase forbids reusing a channel
+  // name across multiple .subscribe() calls.
+  const tag = Math.random().toString(36).slice(2, 9);
+  const key = scholarId || userId || 'all';
   const channel = supabase
-    .channel(`bookings:${scholarId || userId || 'all'}`)
+    .channel(`bookings:${key}:${tag}`)
     .on(
       'postgres_changes',
       {
