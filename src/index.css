@@ -402,12 +402,28 @@ footer {
 @keyframes bubble-pop {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Waving arm — pivots around the right shoulder. Starts when the speech bubble pops. */
+.imam-arm {
+  transform-origin: 162px 205px;
+  animation: imam-wave 1700ms ease-in-out 1700ms 1 both;
+}
+@keyframes imam-wave {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-22deg); }
+  35%  { transform: rotate(10deg); }
+  55%  { transform: rotate(-22deg); }
+  75%  { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .greeting,
   .greeting-arabic,
   .greeting-english,
   .greeting-subtitle,
   .imam-figure,
+  .imam-arm,
   .speech-bubble {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;

@@ -74,6 +74,29 @@ function CartoonImam() {
       />
       {/* Turban — small jewel/star */}
       <text x="110" y="68" textAnchor="middle" fontSize="18" fill="#fbbf24" fontFamily="serif">☪</text>
+
+      {/* Right arm — drawn raised in "wave" pose, animated to rock back and forth.
+          Pivot point lives at the right shoulder (~165, 205); see .imam-arm in CSS. */}
+      <g className="imam-arm">
+        {/* Sleeve curve from shoulder up toward the hand */}
+        <path
+          d="M 158 210 Q 150 180 165 150 Q 180 128 200 120 Q 216 122 220 134 Q 210 145 195 154 Q 182 175 178 200 Q 173 213 165 213 Z"
+          fill="url(#imam-robe)"
+          stroke="#073d22"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        {/* Hand */}
+        <circle cx="208" cy="122" r="13" fill="url(#imam-skin)" stroke="#c9a07a" strokeWidth="1.2" />
+        {/* Thumb hint */}
+        <path
+          d="M 218 117 Q 222 124 218 132"
+          stroke="#c9a07a"
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </g>
     </svg>
   );
 }
