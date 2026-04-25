@@ -38,8 +38,8 @@ export default function Nav() {
     <div className="nav">
       <div className="container nav-row">
         <NavLink to={session?.role === 'scholar' ? '/dashboard' : '/'} className="brand">
-          <div className="brand-mark">S</div>
-          <span>ScholarConnect</span>
+          <div className="brand-mark">☪</div>
+          <span>Imam Connect</span>
         </NavLink>
 
         <div className="nav-links">

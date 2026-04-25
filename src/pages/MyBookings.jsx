@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getBookingsForUser, subscribeBookings } from '../store/bookings.js';
 import { useSession } from '../context/AuthContext.jsx';
 import JoinButton from '../components/JoinButton.jsx';
+import ReviewBlock from '../components/ReviewBlock.jsx';
 
 function fmt(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -64,6 +65,7 @@ export default function MyBookings() {
                   <button className="ghost">View details</button>
                 </Link>
               </div>
+              <ReviewBlock booking={b} />
             </article>
           ))}
         </div>

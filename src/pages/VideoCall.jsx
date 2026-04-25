@@ -6,6 +6,7 @@ import { useNow } from '../hooks/useNow.js';
 import { useSession } from '../context/AuthContext.jsx';
 import { requestVideoSession } from '../lib/api.js';
 import { useScholar } from '../context/ScholarsContext.jsx';
+import ReviewBlock from '../components/ReviewBlock.jsx';
 
 function fmt(iso) {
   return new Date(iso).toLocaleString(undefined, {
@@ -129,12 +130,15 @@ export default function VideoCall() {
           </div>
         </div>
       ) : (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 42, marginBottom: 10 }}>⌛</div>
-          <h3 style={{ margin: '0 0 6px' }}>This session has ended</h3>
-          <p className="muted" style={{ marginTop: 0 }}>
-            The call window closed. Reach out to book another session.
-          </p>
+        <div className="card" style={{ padding: 32 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 42, marginBottom: 10 }}>⌛</div>
+            <h3 style={{ margin: '0 0 6px' }}>This session has ended</h3>
+            <p className="muted" style={{ marginTop: 0 }}>
+              The call window has closed. We'd love your feedback for {booking.scholarName}.
+            </p>
+          </div>
+          {!isScholar && <ReviewBlock booking={booking} />}
         </div>
       )}
     </div>

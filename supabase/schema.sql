@@ -228,3 +228,43 @@ create policy "applications: self read"
 -- Lock down the previous wide-open scholar insert policy. Only the server
 -- (using service-role key) creates scholar rows now.
 drop policy if exists "scholars: authenticated insert" on scholars;
+
+-- ──────────────── Reviews (post-call rating + comment) ────────────────
+-- One review per booking. Anyone can read, only the booker can create.
+create table if not exists reviews (
+  id          uuid primary key default gen_random_uuid(),
+  booking_id  text references bookings(id) on delete cascade not null unique,
+  scholar_id  text not null,
+  user_id     text not null,
+  user_name   text not null,
+  rating      int  not null check (rating between 1 and 5),
+  comment     text,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists reviews_scholar_idx on reviews (scholar_id, created_at desc);
+
+alter table reviews enable row level security;
+
+drop policy if exists "reviews: public read" on reviews;
+create policy "reviews: public read"
+  on reviews for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "reviews: anon insert" on reviews;
+create policy "reviews: anon insert"
+  on reviews for insert
+  to anon, authenticated
+  with check (true);
+
+-- View for scholar aggregate rating — used by the marketplace cards.
+create or replace view scholar_rating_summary as
+select
+  scholar_id,
+  count(*)::int       as review_count,
+  round(avg(rating)::numeric, 1) as avg_rating
+from reviews
+group by scholar_id;
+
+grant select on scholar_rating_summary to anon, authenticated;

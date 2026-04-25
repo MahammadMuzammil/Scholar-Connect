@@ -6,6 +6,7 @@ import { supabase } from './lib/supabase.js';
 import RequireAuth from './components/RequireAuth.jsx';
 import Nav from './components/Nav.jsx';
 import Greeting from './components/Greeting.jsx';
+import Background from './components/Background.jsx';
 import Home from './pages/Home.jsx';
 import ScholarDetail from './pages/ScholarDetail.jsx';
 import Booking from './pages/Booking.jsx';
@@ -49,6 +50,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ScholarsProvider>
+        <Background />
         <Greeting />
         <Nav />
       <Routes>
@@ -101,7 +103,7 @@ export default function App() {
 
         <Route path="/call/:bookingId" element={<VideoCall />} />
       </Routes>
-      <footer className="container">ScholarConnect — a Shariah-compliant consultation marketplace</footer>
+      <footer className="container">Imam Connect — a Shariah-compliant consultation marketplace</footer>
       </ScholarsProvider>
     </AuthProvider>
   );

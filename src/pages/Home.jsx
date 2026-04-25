@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <div className="container">
       <section className="hero">
-        <h1>Book a session with a verified Islamic scholar</h1>
+        <h1>Connect with a verified Imam or Islamic scholar</h1>
         <p>
           Connect over video with certified muftis, Quran teachers, dream interpreters, and Islamic
           counselors. Pick a slot, pay, and join your private call.
