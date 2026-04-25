@@ -285,9 +285,63 @@ footer {
   text-align: center;
   padding: 0 20px;
 }
+.imam-stage {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 18px;
+  perspective: 800px;
+}
+.imam-figure {
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 12px 40px rgba(245,158,11,.35));
+  animation: imam-whirl-in 1700ms cubic-bezier(.16,.84,.34,1.05) both;
+}
+.speech-bubble {
+  position: absolute;
+  top: -12px;
+  right: -88px;
+  background: #fffaf0;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(8px) scale(.7);
+  transform-origin: 0 100%;
+  animation: bubble-pop 600ms cubic-bezier(.2,.9,.3,1.2) 1700ms forwards;
+}
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  left: -12px;
+  border: 8px solid transparent;
+  border-right-color: #fffaf0;
+}
+@media (max-width: 640px) {
+  .speech-bubble {
+    right: auto;
+    left: 50%;
+    top: -42px;
+    transform: translateX(-50%) translateY(8px) scale(.7);
+    transform-origin: 50% 100%;
+  }
+  .speech-bubble::before {
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+    border-right-color: transparent;
+    border-top-color: #fffaf0;
+  }
+}
+
 .greeting-arabic {
   font-family: 'Amiri', 'Scheherazade New', 'Noto Naskh Arabic', serif;
-  font-size: clamp(56px, 12vw, 120px);
+  font-size: clamp(48px, 10vw, 92px);
   line-height: 1;
   background: linear-gradient(180deg, #fde68a, #f59e0b);
   -webkit-background-clip: text;
@@ -295,31 +349,24 @@ footer {
   color: transparent;
   opacity: 0;
   transform: translateY(20px) scale(.96);
-  animation: arabic-in 900ms cubic-bezier(.2,.7,.2,1) 100ms forwards;
+  animation: arabic-in 900ms cubic-bezier(.2,.7,.2,1) 2300ms forwards;
   filter: drop-shadow(0 4px 20px rgba(245,158,11,.35));
 }
 .greeting-english {
-  margin-top: 18px;
-  font-size: clamp(22px, 4vw, 36px);
+  margin-top: 14px;
+  font-size: clamp(20px, 3.5vw, 32px);
   font-weight: 600;
   color: var(--text);
   letter-spacing: .5px;
-  display: inline-flex;
-  gap: 1px;
-}
-.greeting-letter {
-  display: inline-block;
   opacity: 0;
-  transform: translateY(30px) rotate(8deg);
-  animation: letter-fly 700ms cubic-bezier(.2,.8,.2,1) forwards;
-  white-space: pre;
+  animation: fade-in 700ms ease 2900ms forwards;
 }
 .greeting-subtitle {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--muted);
   font-size: clamp(13px, 2vw, 15px);
   opacity: 0;
-  animation: fade-in 600ms ease 1400ms forwards;
+  animation: fade-in 600ms ease 3300ms forwards;
   letter-spacing: 1px;
 }
 
@@ -332,14 +379,37 @@ footer {
 @keyframes arabic-in {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes letter-fly {
-  to { opacity: 1; transform: translateY(0) rotate(0); }
-}
 @keyframes fade-in {
   to { opacity: 1; }
 }
+@keyframes imam-whirl-in {
+  0% {
+    opacity: 0;
+    transform: translateX(140vw) rotate(-1080deg) scale(0.2);
+  }
+  55% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg) scale(1.18);
+  }
+  75% {
+    transform: translateX(0) rotate(0deg) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+}
+@keyframes bubble-pop {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .greeting, .greeting-arabic, .greeting-letter, .greeting-subtitle {
+  .greeting,
+  .greeting-arabic,
+  .greeting-english,
+  .greeting-subtitle,
+  .imam-figure,
+  .speech-bubble {
     animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
   }
 }
