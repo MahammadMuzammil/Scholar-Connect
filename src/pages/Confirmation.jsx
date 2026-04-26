@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { useBooking } from '../hooks/useBooking.js';
 import { getCallWindow, formatCountdown } from '../lib/callWindow.js';
 import { useNow } from '../hooks/useNow.js';
@@ -15,17 +15,22 @@ function fmt(iso) {
 
 export default function Confirmation() {
   const { bookingId } = useParams();
-  const { booking, loading, error } = useBooking(bookingId);
+  const location = useLocation();
+  // Booking handed to us by Booking.jsx navigate() — lets us render
+  // instantly on first paint without waiting for a Supabase fetch.
+  const initialBooking = location.state?.booking || null;
+  const { booking: fetched, loading, error } = useBooking(bookingId);
+  const booking = fetched || initialBooking;
   const now = useNow(1000);
 
-  if (loading) {
+  if (!booking && loading) {
     return (
       <div className="container" style={{ padding: '40px 0' }}>
         <div className="empty">Loading booking…</div>
       </div>
     );
   }
-  if (error || !booking) {
+  if (!booking) {
     return (
       <div className="container" style={{ padding: '40px 0' }}>
         <div className="empty">

@@ -86,7 +86,9 @@ export default function Booking() {
         topic: form.topic,
       });
       notifyBookingCreated(booking);
-      navigate(`/confirmation/${booking.id}`);
+      // Hand the freshly-created booking to the confirmation page directly so
+      // it renders immediately, without re-fetching from Supabase.
+      navigate(`/confirmation/${booking.id}`, { state: { booking } });
     } catch (err) {
       setSubmitError(
         err.code === '23505'
