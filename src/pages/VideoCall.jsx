@@ -75,7 +75,7 @@ export default function VideoCall() {
           <h2 style={{ margin: '0 0 4px' }}>Session with {booking.scholarName}</h2>
           <div className="muted" style={{ fontSize: 14 }}>
             Scheduled for {fmt(booking.slotStartsAt)}
-            {vs?.provider && <> · {vs.provider === 'daily' ? 'Daily.co' : 'Jitsi (dev fallback)'}</>}
+            {vs?.provider && <> · {vs.provider === 'daily' ? 'Daily.co' : 'Jitsi'}</>}
           </div>
         </div>
         <div className="inline">
@@ -100,13 +100,32 @@ export default function VideoCall() {
           </div>
         ) : vs ? (
           <>
-            <div className="video-wrap">
-              <iframe
-                src={vs.roomUrl}
-                allow="camera; microphone; fullscreen; display-capture; autoplay"
-                title="Video call"
-              />
-            </div>
+            {vs.provider === 'jitsi' ? (
+              <div className="card" style={{ textAlign: 'center', padding: 32 }}>
+                <div style={{ fontSize: 38, marginBottom: 10 }}>🎥</div>
+                <h3 style={{ margin: '0 0 6px' }}>Your call room is ready</h3>
+                <p className="muted" style={{ marginTop: 0, marginBottom: 18 }}>
+                  Click below to open the call in a new tab. (Embedded calls are limited to
+                  5 minutes — opening in a tab gives you the full session.)
+                </p>
+                <a href={vs.roomUrl} target="_blank" rel="noreferrer">
+                  <button className="primary" style={{ minWidth: 220 }}>
+                    Open call in new tab →
+                  </button>
+                </a>
+                <p className="muted" style={{ fontSize: 12, marginTop: 14 }}>
+                  Allow camera + microphone access when your browser asks.
+                </p>
+              </div>
+            ) : (
+              <div className="video-wrap">
+                <iframe
+                  src={vs.roomUrl}
+                  allow="camera; microphone; fullscreen; display-capture; autoplay"
+                  title="Video call"
+                />
+              </div>
+            )}
             {vs.warning && (
               <p style={{ fontSize: 13, marginTop: 10, color: '#f59e0b' }}>⚠ {vs.warning}</p>
             )}
