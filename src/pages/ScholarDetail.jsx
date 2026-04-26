@@ -20,14 +20,25 @@ export default function ScholarDetail() {
 
   const slots = useMemo(() => (scholar ? generateSlots(scholar.id) : []), [scholar]);
   const [bookedSlotIds, setBookedSlotIds] = useState(() => new Set());
+  // True until the first availability fetch resolves. While true we render
+  // every slot as disabled to prevent clicks on stale "available" state.
+  const [slotsLoading, setSlotsLoading] = useState(true);
 
   useEffect(() => {
     if (!scholar) return;
     let cancelled = false;
-    const refresh = () => {
-      getBookedSlotIds(scholar.id).then((ids) => { if (!cancelled) setBookedSlotIds(ids); });
-    };
-    refresh();
+    setSlotsLoading(true);
+
+    const refresh = () =>
+      getBookedSlotIds(scholar.id).then((ids) => {
+        if (!cancelled) setBookedSlotIds(ids);
+      });
+
+    refresh().finally(() => {
+      if (!cancelled) setSlotsLoading(false);
+    });
+
+    // Realtime updates after the initial fetch — don't reset slotsLoading.
     const unsub = subscribeBookings({ scholarId: scholar.id }, refresh);
     return () => { cancelled = true; unsub?.(); };
   }, [scholar]);
@@ -92,7 +103,14 @@ export default function ScholarDetail() {
             </div>
           </div>
 
-          <h3 style={{ marginTop: 24 }}>Available slots</h3>
+          <h3 style={{ marginTop: 24 }}>
+            Available slots{' '}
+            {slotsLoading && (
+              <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>
+                · checking availability…
+              </span>
+            )}
+          </h3>
           <div className="stack">
             {Object.entries(grouped).map(([day, list]) => (
               <div key={day}>
@@ -111,7 +129,7 @@ export default function ScholarDetail() {
                       <button
                         key={slot.id}
                         className={classes}
-                        disabled={booked}
+                        disabled={booked || slotsLoading}
                         onClick={() =>
                           navigate(`/book/${scholar.id}?slot=${encodeURIComponent(slot.id)}`)
                         }
