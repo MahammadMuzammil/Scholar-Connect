@@ -194,6 +194,33 @@ input:focus, textarea:focus, select:focus {
   align-items: center;
   margin: 4px 0 6px;
 }
+.avatar-edit-wrap {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+.avatar-edit-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 3px solid var(--card);
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  user-select: none;
+  transition: transform .15s ease;
+}
+.avatar-edit-btn:hover {
+  transform: scale(1.08);
+}
 .avatar-verified-badge {
   position: absolute;
   bottom: 6px;

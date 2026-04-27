@@ -141,6 +141,34 @@ on conflict (id) do update set
   phone             = excluded.phone,
   sort_order        = excluded.sort_order;
 
+-- ──────────────── Scholar profile photos (Storage) ────────────────
+-- Public bucket where scholars upload their own avatars from the dashboard.
+insert into storage.buckets (id, name, public)
+values ('scholar-photos', 'scholar-photos', true)
+on conflict (id) do nothing;
+
+-- Anyone (anon + authenticated) can read photos — they're displayed publicly.
+drop policy if exists "scholar-photos: public read" on storage.objects;
+create policy "scholar-photos: public read"
+  on storage.objects for select
+  using (bucket_id = 'scholar-photos');
+
+-- Any signed-in user can upload to the scholar-photos bucket. The dashboard
+-- only exposes the upload UI to users with role='scholar', so this is safe
+-- enough for MVP. Tighten later if needed (e.g. require path = profile.scholar_id).
+drop policy if exists "scholar-photos: authenticated insert" on storage.objects;
+create policy "scholar-photos: authenticated insert"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'scholar-photos');
+
+drop policy if exists "scholar-photos: authenticated update" on storage.objects;
+create policy "scholar-photos: authenticated update"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'scholar-photos')
+  with check (bucket_id = 'scholar-photos');
+
 -- ──────────────── Profiles (roles) ────────────────
 -- Each Supabase Auth user gets a profile row. The `role` column is the
 -- authoritative answer to "is this person a scholar?".

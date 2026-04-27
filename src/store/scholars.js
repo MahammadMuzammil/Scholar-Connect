@@ -40,6 +40,44 @@ export async function fetchScholarById(id) {
   return fromRow(data);
 }
 
+// Upload a new profile photo for the given scholar to Supabase Storage and
+// update the scholars row's `photo` URL. Requires:
+//   1. a public bucket called 'scholar-photos' (see supabase/schema.sql)
+//   2. an authenticated user — RLS allows any authenticated user to write
+export async function uploadScholarPhoto(scholarId, file) {
+  if (!file?.type?.startsWith('image/')) {
+    throw new Error('Please choose an image file.');
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('Image must be under 5 MB.');
+  }
+
+  // Use a timestamped filename so the URL changes — sidesteps any browser
+  // image cache from a previous upload.
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${scholarId}/${Date.now()}.${ext}`;
+
+  const { error: uploadErr } = await supabase.storage
+    .from('scholar-photos')
+    .upload(path, file, {
+      contentType: file.type,
+      cacheControl: '3600',
+      upsert: false,
+    });
+  if (uploadErr) throw uploadErr;
+
+  const { data } = supabase.storage.from('scholar-photos').getPublicUrl(path);
+  const publicUrl = data.publicUrl;
+
+  const { error: updateErr } = await supabase
+    .from('scholars')
+    .update({ photo: publicUrl })
+    .eq('id', scholarId);
+  if (updateErr) throw updateErr;
+
+  return publicUrl;
+}
+
 // Generate available slots for a scholar (next 5 days, 6 fixed hours per day).
 // Kept client-side for now; could move to DB if scholars want custom availability.
 export function generateSlots(scholarId) {

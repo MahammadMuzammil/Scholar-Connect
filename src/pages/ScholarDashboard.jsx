@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { generateSlots } from '../store/scholars.js';
-import { useScholar } from '../context/ScholarsContext.jsx';
+import { generateSlots, uploadScholarPhoto } from '../store/scholars.js';
+import { useScholar, useScholars } from '../context/ScholarsContext.jsx';
 import { getBookingsForScholar, markRead, subscribeBookings } from '../store/bookings.js';
 import { useSession } from '../context/AuthContext.jsx';
 import JoinButton from '../components/JoinButton.jsx';
@@ -19,8 +19,11 @@ function fmt(iso) {
 export default function ScholarDashboard() {
   const session = useSession();
   const { scholar, loading: scholarLoading } = useScholar(session?.id);
+  const { refresh: refreshScholars } = useScholars();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [photoStatus, setPhotoStatus] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const refresh = useCallback(() => {
     if (!scholar) return;
@@ -72,16 +75,65 @@ export default function ScholarDashboard() {
     }
   };
 
+  const onPhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';   // reset so same-file re-pick still fires onChange
+    if (!file || !scholar) return;
+    setUploading(true);
+    setPhotoStatus('Uploading…');
+    try {
+      await uploadScholarPhoto(scholar.id, file);
+      setPhotoStatus('Photo updated ✓');
+      await refreshScholars();
+      setTimeout(() => setPhotoStatus(null), 2500);
+    } catch (err) {
+      console.error('photo upload failed', err);
+      setPhotoStatus(`Upload failed: ${err.message || 'unknown error'}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="container" style={{ padding: '28px 0 40px' }}>
       <h2 style={{ margin: '0 0 16px' }}>Welcome back, {scholar.name.split(' ')[0]}</h2>
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="inline">
-          <div className="avatar" style={{ backgroundImage: `url(${scholar.photo})` }} />
+          <div className="avatar-edit-wrap">
+            <div className="avatar lg" style={{ backgroundImage: `url(${scholar.photo})` }} />
+            <label
+              htmlFor="scholar-photo-upload"
+              className="avatar-edit-btn"
+              title="Change profile photo"
+              aria-label="Change profile photo"
+            >
+              {uploading ? '…' : '✎'}
+            </label>
+            <input
+              id="scholar-photo-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={onPhotoChange}
+              disabled={uploading}
+            />
+          </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 600 }}>{scholar.name}</div>
             <div className="muted" style={{ fontSize: 13 }}>{scholar.title}</div>
+            {photoStatus && (
+              <div
+                className="muted"
+                style={{
+                  fontSize: 12,
+                  marginTop: 4,
+                  color: photoStatus.startsWith('Upload failed') ? 'var(--danger)' : undefined,
+                }}
+              >
+                {photoStatus}
+              </div>
+            )}
           </div>
           <span className="verified-pill" style={{ marginLeft: 'auto' }}>
             {unread > 0 ? `${unread} new booking${unread > 1 ? 's' : ''}` : 'No new bookings'}
