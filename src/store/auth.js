@@ -2,16 +2,31 @@ import { supabase } from '../lib/supabase.js';
 import { uploadApplicantPhoto } from './scholars.js';
 
 async function fetchProfile(userId) {
-  const { data, error } = await supabase
+  // Hard timeout — a hanging profiles query has caused the login flow to pin
+  // forever on "Signing in…". Better to fall back to a default profile shape
+  // (role: 'user') than to hang the whole UI.
+  const query = supabase
     .from('profiles')
     .select('role, scholar_id, name')
     .eq('id', userId)
     .maybeSingle();
-  if (error) {
-    console.warn('Failed to fetch profile:', error);
+
+  const timeout = new Promise((resolve) =>
+    setTimeout(() => resolve({ timedOut: true }), 4000)
+  );
+
+  const result = await Promise.race([query, timeout]);
+
+  if (result?.timedOut) {
+    console.warn('fetchProfile timed out after 4s — falling back to defaults');
     return null;
   }
-  return data;
+
+  if (result.error) {
+    console.warn('Failed to fetch profile:', result.error);
+    return null;
+  }
+  return result.data;
 }
 
 // Shape the raw Supabase user + DB profile into our app's session object.

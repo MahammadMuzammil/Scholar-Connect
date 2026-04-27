@@ -21,8 +21,20 @@ export default function Login() {
       await login(form);
       // Pull the session + profile into AuthContext before navigating, so the
       // destination route doesn't render with stale `session: null` and bounce
-      // back to /login.
-      await refresh();
+      // back to /login. Hard timeout protects against a hanging profiles fetch
+      // — the button releases instead of staying stuck on "Signing in…".
+      const session = await Promise.race([
+        refresh(),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Profile fetch timed out — please try again.')),
+            5000
+          )
+        ),
+      ]);
+      if (!session) {
+        throw new Error('Signed in but couldn\'t load your profile. Please try again.');
+      }
       navigate(redirectTo || '/', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-in failed.');

@@ -34,9 +34,18 @@ export default function Signup() {
         setPendingApplication(true);
         return;
       }
-      // Pull the session + profile into AuthContext before navigating, so the
-      // home page doesn't render with stale `session: null` and bounce to /login.
-      await refresh();
+      // Pull the session + profile into AuthContext before navigating. Hard
+      // timeout so a slow profiles fetch can't pin the button on
+      // "Creating account…" forever.
+      await Promise.race([
+        refresh(),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Profile fetch timed out — please try signing in.')),
+            5000
+          )
+        ),
+      ]);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'Sign-up failed.');
