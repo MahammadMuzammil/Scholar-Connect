@@ -104,6 +104,19 @@ create policy "scholars: authenticated insert"
   to authenticated
   with check (true);
 
+-- Scholars can update only their own row. The link is profiles.scholar_id =
+-- scholars.id, where profiles.id is the auth user's UUID.
+drop policy if exists "scholars: self update" on scholars;
+create policy "scholars: self update"
+  on scholars for update
+  to authenticated
+  using (
+    id = (select scholar_id from profiles where id = auth.uid())
+  )
+  with check (
+    id = (select scholar_id from profiles where id = auth.uid())
+  );
+
 -- Seed current scholars. On conflict (re-run), update public fields.
 insert into scholars (id, name, title, specialties, languages, rating, reviews, price_per_session, session_minutes, photo, bio, phone, sort_order)
 values
