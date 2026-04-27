@@ -34,6 +34,26 @@ export default function Booking() {
   const [form, setForm] = useState({ topic: '' });
   const [processing, setProcessing] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const PHONEPE_NUMBER = '9652446584';
+  const copyPhoneNumber = async () => {
+    try {
+      await navigator.clipboard.writeText(PHONEPE_NUMBER);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Older browsers / iOS Safari without secure context fallback
+      const ta = document.createElement('textarea');
+      ta.value = PHONEPE_NUMBER;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
+  };
 
   if (loading) {
     return (
@@ -135,19 +155,56 @@ export default function Booking() {
               background: 'var(--bg-soft)',
               border: '1px solid var(--border)',
               borderRadius: 12,
-              gap: 10,
+              gap: 12,
             }}
           >
             <div className="muted" style={{ fontSize: 13, textAlign: 'center' }}>
-              Scan with PhonePe (or any UPI app) and pay
+              Pay <strong>${pricing.price}</strong> via PhonePe / Google Pay / any UPI app
             </div>
-            <div style={{ fontWeight: 700, fontSize: 22 }}>${pricing.price}</div>
+            <div style={{ fontWeight: 700, fontSize: 26 }}>${pricing.price}</div>
+
+            {/* OPTION 1: pay by phone number — easiest for users who don't want to scan */}
+            <div
+              style={{
+                width: '100%',
+                background: 'rgba(22,163,74,.10)',
+                border: '1.5px solid rgba(22,163,74,.4)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ fontSize: 22 }}>📱</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="muted" style={{ fontSize: 12 }}>Send to PhonePe number</div>
+                <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '.5px' }}>
+                  {PHONEPE_NUMBER}
+                </div>
+                <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>MUJAMMIL M</div>
+              </div>
+              <button
+                type="button"
+                onClick={copyPhoneNumber}
+                style={{ padding: '8px 14px', fontSize: 13 }}
+              >
+                {copied ? '✓ Copied' : 'Copy number'}
+              </button>
+            </div>
+
+            <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>
+              — or scan the QR code —
+            </div>
+
+            {/* OPTION 2: scan the QR */}
             <img
               src="/payment-qr.png"
               alt="PhonePe QR — pay MUJAMMIL M"
               style={{
                 width: '100%',
-                maxWidth: 260,
+                maxWidth: 240,
                 borderRadius: 8,
                 background: '#000',
                 display: 'block',
@@ -155,8 +212,8 @@ export default function Booking() {
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
             <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>
-              Paying MUJAMMIL M · Pay the amount above, then click the button below to confirm
-              your booking.
+              After paying, click the button below to confirm your booking. The admin will verify
+              your payment before activating the call.
             </div>
           </div>
 
