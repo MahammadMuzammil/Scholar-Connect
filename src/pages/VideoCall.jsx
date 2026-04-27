@@ -67,6 +67,26 @@ export default function VideoCall() {
       </div>
     );
   }
+  // Block users from joining until the admin has approved the booking.
+  // Scholars can join regardless so they can prep — but in practice they only
+  // get a join link after approval anyway.
+  if (booking.status === 'pending' && !isScholar) {
+    return (
+      <div className="container" style={{ padding: '40px 0' }}>
+        <div className="card" style={{ textAlign: 'center', padding: 32, maxWidth: 520, margin: '0 auto' }}>
+          <div style={{ fontSize: 42, marginBottom: 10 }}>⏳</div>
+          <h3 style={{ margin: '0 0 6px' }}>Awaiting payment verification</h3>
+          <p className="muted">
+            Your booking is still pending. Once the admin verifies your PhonePe payment,
+            this page will let you join. You can leave this tab open — it updates automatically.
+          </p>
+          <Link to={`/confirmation/${booking.id}`}>
+            <button className="ghost" style={{ marginTop: 14 }}>Back to booking</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container" style={{ padding: '20px 0 40px' }}>

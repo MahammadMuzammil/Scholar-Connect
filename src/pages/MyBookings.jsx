@@ -48,7 +48,26 @@ export default function MyBookings() {
             <article key={b.id} className="card">
               <div className="row-between">
                 <div>
-                  <div style={{ fontWeight: 600 }}>{b.scholarName}</div>
+                  <div style={{ fontWeight: 600 }}>
+                    {b.scholarName}
+                    {b.status === 'pending' && (
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          background: 'rgba(245,158,11,.15)',
+                          color: '#f59e0b',
+                          border: '1px solid rgba(245,158,11,.4)',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        ⏳ Pending approval
+                      </span>
+                    )}
+                  </div>
                   <div className="muted" style={{ fontSize: 13 }}>{fmt(b.slotStartsAt)}</div>
                 </div>
                 <div className="price">${b.amount}</div>

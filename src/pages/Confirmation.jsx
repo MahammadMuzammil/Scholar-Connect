@@ -19,6 +19,7 @@ export default function Confirmation() {
   // Booking handed to us by Booking.jsx navigate() — lets us render
   // instantly on first paint without waiting for a Supabase fetch.
   const initialBooking = location.state?.booking || null;
+  // useBooking is reactive — it re-fetches when the admin approves.
   const { booking: fetched, loading, error } = useBooking(bookingId);
   const booking = fetched || initialBooking;
   const now = useNow(1000);
@@ -40,6 +41,8 @@ export default function Confirmation() {
     );
   }
 
+  const isPending = booking.status === 'pending';
+
   const win = getCallWindow(booking, now);
 
   return (
@@ -48,17 +51,27 @@ export default function Confirmation() {
         <div
           style={{
             width: 64, height: 64, borderRadius: '50%',
-            background: 'rgba(34,197,94,.15)', border: '2px solid rgba(34,197,94,.5)',
+            background: isPending ? 'rgba(245,158,11,.15)' : 'rgba(34,197,94,.15)',
+            border: isPending ? '2px solid rgba(245,158,11,.5)' : '2px solid rgba(34,197,94,.5)',
             display: 'grid', placeItems: 'center', margin: '0 auto 14px',
-            color: '#22c55e', fontSize: 30,
+            color: isPending ? '#f59e0b' : '#22c55e', fontSize: 30,
           }}
         >
-          ✓
+          {isPending ? '⏳' : '✓'}
         </div>
-        <h2 style={{ margin: 0 }}>Booking confirmed</h2>
+        <h2 style={{ margin: 0 }}>
+          {isPending ? 'Awaiting payment verification' : 'Booking confirmed'}
+        </h2>
         <p className="muted" style={{ marginTop: 8 }}>
-          A message was sent to <strong>{booking.scholarName}</strong>. They'll join the call at the scheduled
-          time.
+          {isPending ? (
+            <>
+              We've received your booking. The admin will verify your PhonePe payment shortly
+              and confirm. You'll be able to join the call once it's confirmed —
+              <strong> this page updates automatically</strong>.
+            </>
+          ) : (
+            <>A message was sent to <strong>{booking.scholarName}</strong>. They'll join the call at the scheduled time.</>
+          )}
         </p>
 
         <div className="stack" style={{ textAlign: 'left', marginTop: 20 }}>
@@ -91,7 +104,11 @@ export default function Confirmation() {
           className="inline"
           style={{ justifyContent: 'center', marginTop: 22, flexDirection: 'column', gap: 10 }}
         >
-          {win.status === 'open' ? (
+          {isPending ? (
+            <button className="primary" disabled>
+              Waiting for admin approval…
+            </button>
+          ) : win.status === 'open' ? (
             <Link to={`/call/${booking.id}`}>
               <button className="primary">Join video call now</button>
             </Link>

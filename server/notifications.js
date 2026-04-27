@@ -85,6 +85,92 @@ function renderWhatsApp(booking, scholar) {
   ].filter(Boolean).join('\n');
 }
 
+function renderAdminApprovalEmail(booking, scholar, approveUrl) {
+  const subject = `Approve booking: ${booking.user?.name || 'user'} → ${scholar?.name || booking.scholarId}`;
+  const text = [
+    `New booking awaiting your approval.`,
+    ``,
+    `Booking ID:  ${booking.id}`,
+    `Scholar:     ${scholar?.name || booking.scholarId}`,
+    `User:        ${booking.user?.name || 'Anonymous'} <${booking.user?.email || ''}>`,
+    `Scheduled:   ${fmt(booking.slotStartsAt)}`,
+    `Amount:      $${booking.amount}${booking.postFajr ? ` (Golden Hour +${booking.premiumPercent}%)` : ''}`,
+    booking.topic ? `Topic:       ${booking.topic}` : '',
+    ``,
+    `Verify the payment in PhonePe, then click to approve:`,
+    approveUrl,
+    ``,
+    `Until you approve, the user can't join the call.`,
+  ].filter(Boolean).join('\n');
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:20px;color:#111">
+      <h2 style="margin:0 0 8px">New booking — needs your approval</h2>
+      <p style="margin:0 0 14px">A user has booked and claims they've paid via PhonePe. Verify the
+        payment, then click the button below to confirm. Until you do, the user can't join the call.</p>
+      <table style="border-collapse:collapse;width:100%;margin:14px 0">
+        <tr><td style="padding:6px 0;color:#666;width:130px">Booking&nbsp;ID</td><td><code>${booking.id}</code></td></tr>
+        <tr><td style="padding:6px 0;color:#666">Scholar</td><td><strong>${scholar?.name || booking.scholarId}</strong></td></tr>
+        <tr><td style="padding:6px 0;color:#666">User</td><td>${booking.user?.name || 'Anonymous'} &lt;${booking.user?.email || ''}&gt;</td></tr>
+        <tr><td style="padding:6px 0;color:#666">Scheduled</td><td>${fmt(booking.slotStartsAt)}</td></tr>
+        <tr><td style="padding:6px 0;color:#666">Amount</td><td>$${booking.amount}${booking.postFajr ? ` <span style="color:#b45309">(Golden Hour +${booking.premiumPercent}%)</span>` : ''}</td></tr>
+        ${booking.topic ? `<tr><td style="padding:6px 0;color:#666">Topic</td><td>${booking.topic}</td></tr>` : ''}
+      </table>
+      <p style="margin:18px 0 8px"><strong>Approve this booking:</strong></p>
+      <p>
+        <a href="${approveUrl}"
+           style="display:inline-block;padding:12px 22px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">
+          ✓ Approve booking
+        </a>
+      </p>
+      <p style="color:#888;font-size:13px;margin-top:24px">
+        Anyone with this link can approve the booking, so don't forward this email.
+      </p>
+    </div>
+  `;
+
+  return { subject, text, html };
+}
+
+async function sendAdminApprovalEmail(booking, scholar, approveUrl) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    return { sent: false, channel: 'admin_email', reason: 'ADMIN_EMAIL not set' };
+  }
+  const email = renderAdminApprovalEmail(booking, scholar, approveUrl);
+
+  if (!process.env.RESEND_API_KEY) {
+    console.log('\n--- [admin email] RESEND_API_KEY not set, logging email ---');
+    console.log(`To: ${adminEmail}`);
+    console.log(`Subject: ${email.subject}\n`);
+    console.log(email.text);
+    console.log('-----------------------------------------------------------\n');
+    return { sent: false, channel: 'admin_email', mode: 'console', to: adminEmail };
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM || 'ScholarConnect <onboarding@resend.dev>',
+      to: adminEmail,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend ${res.status}: ${body}`);
+  }
+  const data = await res.json();
+  return { sent: true, channel: 'admin_email', mode: 'resend', to: adminEmail, id: data.id };
+}
+
 function renderAdminWhatsApp(booking, scholar) {
   const premium = booking.postFajr ? ` (Golden Hour +${booking.premiumPercent}%)` : '';
   return [
@@ -187,19 +273,24 @@ async function sendAdminWhatsApp(booking, scholar) {
   return postTwilioWhatsApp(adminPhone, renderAdminWhatsApp(booking, scholar), 'admin_whatsapp');
 }
 
-export async function notifyScholarBooked(booking) {
+export async function notifyScholarBooked(booking, approveUrl) {
   const scholar = SCHOLARS[booking.scholarId];
   if (!scholar) return { sent: false, reason: 'unknown_scholar_id' };
 
+  // Admin email with approve button is the highest-priority channel — without
+  // it the booking is stuck in "pending" forever. WhatsApp + scholar email are
+  // best-effort heads-ups.
   const results = await Promise.allSettled([
     sendEmail(booking, scholar),
     sendWhatsApp(booking, scholar),
     sendAdminWhatsApp(booking, scholar),
+    approveUrl ? sendAdminApprovalEmail(booking, scholar, approveUrl) : Promise.resolve({ sent: false, channel: 'admin_email', reason: 'no_approve_url' }),
   ]);
 
   return {
-    email: results[0].status === 'fulfilled' ? results[0].value : { sent: false, channel: 'email', error: results[0].reason?.message },
-    whatsapp: results[1].status === 'fulfilled' ? results[1].value : { sent: false, channel: 'whatsapp', error: results[1].reason?.message },
-    adminWhatsapp: results[2].status === 'fulfilled' ? results[2].value : { sent: false, channel: 'admin_whatsapp', error: results[2].reason?.message },
+    email:          results[0].status === 'fulfilled' ? results[0].value : { sent: false, channel: 'email',          error: results[0].reason?.message },
+    whatsapp:       results[1].status === 'fulfilled' ? results[1].value : { sent: false, channel: 'whatsapp',       error: results[1].reason?.message },
+    adminWhatsapp:  results[2].status === 'fulfilled' ? results[2].value : { sent: false, channel: 'admin_whatsapp', error: results[2].reason?.message },
+    adminEmail:     results[3].status === 'fulfilled' ? results[3].value : { sent: false, channel: 'admin_email',    error: results[3].reason?.message },
   };
 }

@@ -84,6 +84,9 @@ export default function Booking() {
         userId: session.id,
         user: { name: session.name, email: session.email },
         topic: form.topic,
+        // Booking starts as pending — admin must verify the PhonePe payment
+        // and click the approve link in the email before the user can join.
+        status: 'pending',
       });
       notifyBookingCreated(booking);
       // Hand the freshly-created booking to the confirmation page directly so

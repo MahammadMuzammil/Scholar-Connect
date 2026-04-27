@@ -8,6 +8,12 @@ import {
   approvalSuccessHtml,
   approvalErrorHtml,
 } from './applications.js';
+import {
+  bookingApproveLink,
+  approveBooking,
+  bookingApprovalSuccessHtml,
+  bookingApprovalErrorHtml,
+} from './bookingApproval.js';
 
 // Demo mode: server allows token issuance for any future booking. Revert to
 // `10 * 60 * 1000` for production behavior.
@@ -107,11 +113,40 @@ export function createApp() {
       if (!booking?.id || !booking.scholarId) {
         return res.status(400).json({ error: 'invalid_booking' });
       }
-      const result = await notifyScholarBooked(booking);
+      let approveUrl = null;
+      try {
+        approveUrl = bookingApproveLink(req, booking.id);
+      } catch (e) {
+        console.warn('[/api/notify] could not build approve link:', e.message);
+      }
+      const result = await notifyScholarBooked(booking, approveUrl);
       return res.json(result);
     } catch (err) {
       console.error('[/api/notify]', err);
       return res.status(500).json({ error: 'server_error', message: err.message });
+    }
+  });
+
+  // Admin clicks "Approve booking" link from email.
+  app.get('/api/booking/approve', async (req, res) => {
+    try {
+      const { id, token } = req.query;
+      if (!id || !token) {
+        res.status(400).set('Content-Type', 'text/html');
+        return res.send(bookingApprovalErrorHtml('Missing id or token in URL.'));
+      }
+      const result = await approveBooking({ id, token });
+      if (!result.ok) {
+        res.status(result.reason === 'invalid_token' ? 403 : 404)
+          .set('Content-Type', 'text/html');
+        return res.send(bookingApprovalErrorHtml(result.reason));
+      }
+      res.set('Content-Type', 'text/html');
+      return res.send(bookingApprovalSuccessHtml(result.booking));
+    } catch (err) {
+      console.error('[/api/booking/approve]', err);
+      res.status(500).set('Content-Type', 'text/html');
+      return res.send(bookingApprovalErrorHtml(err.message));
     }
   });
 

@@ -6,6 +6,13 @@ export default function JoinButton({ booking }) {
   const now = useNow(1000);
   const win = getCallWindow(booking, now);
 
+  if (booking.status === 'pending') {
+    return (
+      <button className="primary" disabled title="Waiting for admin to verify your payment">
+        Awaiting approval…
+      </button>
+    );
+  }
   if (win.status === 'open') {
     return (
       <Link to={`/call/${booking.id}`}>
