@@ -15,10 +15,10 @@ import {
   bookingApprovalErrorHtml,
 } from './bookingApproval.js';
 
-// Demo mode: server allows token issuance for any future booking. Revert to
-// `10 * 60 * 1000` for production behavior.
-const OPEN_BEFORE_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
-const GRACE_AFTER_MS = 15 * 60 * 1000;
+// Production: server only issues video tokens within the 10-minute pre-slot
+// to (slot+duration+15min grace) window. Mirrors src/lib/callWindow.js.
+const OPEN_BEFORE_MS = 10 * 60 * 1000;        // 10 min
+const GRACE_AFTER_MS = 15 * 60 * 1000;        // 15 min
 
 export function createApp() {
   const app = express();

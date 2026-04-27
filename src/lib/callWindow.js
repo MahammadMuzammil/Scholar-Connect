@@ -1,7 +1,7 @@
-// Demo mode: lets users join any future booking immediately. Revert to
-// `10 * 60 * 1000` (10 min before slot) for production behavior.
-const OPEN_BEFORE_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
-const GRACE_AFTER_MS = 15 * 60 * 1000;
+// Production: call window opens 10 minutes before the scheduled start
+// time and stays open for 15 minutes after the session was supposed to end.
+const OPEN_BEFORE_MS = 10 * 60 * 1000;        // 10 min
+const GRACE_AFTER_MS = 15 * 60 * 1000;        // 15 min
 
 export function getCallWindow(booking, now = Date.now()) {
   const start = new Date(booking.slotStartsAt).getTime();
