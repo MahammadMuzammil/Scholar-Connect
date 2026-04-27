@@ -119,13 +119,13 @@ async function sendAdminEmail({ applicationId, name, email, approveUrl }) {
   return { sent: true, mode: 'resend', to: adminEmail, id: data.id };
 }
 
-export async function createApplicationAndNotify({ userId, name, email }, req) {
+export async function createApplicationAndNotify({ userId, name, email, photoUrl }, req) {
   const admin = getAdminClient();
 
   // Try to insert. If the user already has a pending/approved application, surface that.
   const { data, error } = await admin
     .from('scholar_applications')
-    .insert({ user_id: userId, name, email })
+    .insert({ user_id: userId, name, email, photo_url: photoUrl || null })
     .select()
     .single();
 
@@ -177,7 +177,10 @@ export async function approveApplication({ id, token }) {
   // Use the auth user's UUID as the scholar id so it matches profile.scholar_id.
   const scholarId = app.user_id;
 
-  // Create the scholar row (or update if it exists).
+  // Create the scholar row (or update if it exists). Use the photo the
+  // applicant uploaded at signup if present; fall back to a deterministic
+  // pravatar when they didn't upload one.
+  const photo = app.photo_url || `https://i.pravatar.cc/300?u=${encodeURIComponent(app.email)}`;
   const { error: scholarErr } = await admin.from('scholars').upsert({
     id: scholarId,
     name: app.name,
@@ -188,7 +191,7 @@ export async function approveApplication({ id, token }) {
     reviews: 0,
     price_per_session: 40,
     session_minutes: 30,
-    photo: `https://i.pravatar.cc/300?u=${encodeURIComponent(app.email)}`,
+    photo,
     bio: `${app.name} is a verified scholar on ScholarConnect.`,
     sort_order: 100,
     active: true,

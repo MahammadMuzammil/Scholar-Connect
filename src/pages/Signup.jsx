@@ -7,16 +7,29 @@ export default function Signup() {
   const navigate = useNavigate();
   const { refresh } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [pendingApplication, setPendingApplication] = useState(false);
+
+  const onPhotoChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setPhotoFile(file);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(file ? URL.createObjectURL(file) : null);
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     setError('');
     setBusy(true);
     try {
-      const result = await signupUser(form);
+      // Photo only goes up for scholar applicants; ignored otherwise.
+      const result = await signupUser({
+        ...form,
+        photoFile: form.role === 'scholar' ? photoFile : null,
+      });
       if (result?.applicationSubmitted) {
         setPendingApplication(true);
         return;
@@ -129,10 +142,66 @@ export default function Signup() {
           </div>
 
           {form.role === 'scholar' && (
-            <p className="muted" style={{ fontSize: 13, marginTop: -4, marginBottom: 14 }}>
-              Scholar accounts require admin approval. After signing up, an email is sent to the
-              admin. Once approved, you'll see the scholar dashboard the next time you sign in.
-            </p>
+            <>
+              <div className="field">
+                <label>Profile photo (optional)</label>
+                <div className="inline" style={{ gap: 14, alignItems: 'center' }}>
+                  {photoPreview ? (
+                    <div
+                      className="avatar lg"
+                      style={{ backgroundImage: `url(${photoPreview})` }}
+                      aria-label="Selected photo preview"
+                    />
+                  ) : (
+                    <div
+                      className="avatar lg"
+                      style={{
+                        display: 'grid',
+                        placeItems: 'center',
+                        color: 'var(--muted)',
+                        fontSize: 28,
+                      }}
+                    >
+                      🕌
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <input
+                      id="signup-photo"
+                      type="file"
+                      accept="image/*"
+                      onChange={onPhotoChange}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="signup-photo">
+                      <span
+                        className="ghost"
+                        style={{
+                          display: 'inline-block',
+                          padding: '8px 14px',
+                          borderRadius: 8,
+                          background: 'var(--bg-soft)',
+                          border: '1px solid var(--border)',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                        }}
+                      >
+                        {photoFile ? 'Change photo' : 'Choose photo'}
+                      </span>
+                    </label>
+                    {photoFile && (
+                      <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                        {photoFile.name} ({Math.round(photoFile.size / 1024)} KB)
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="muted" style={{ fontSize: 13, marginTop: -4, marginBottom: 14 }}>
+                Scholar accounts require admin approval. After signing up, an email is sent to the
+                admin. Once approved, you'll see the scholar dashboard the next time you sign in.
+              </p>
+            </>
           )}
 
           {error && <p style={{ color: 'var(--danger)', fontSize: 14 }}>{error}</p>}

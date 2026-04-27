@@ -72,11 +72,14 @@ export function createApp() {
   // Scholar applies — server creates application row + emails admin.
   app.post('/api/scholar-application', async (req, res) => {
     try {
-      const { userId, name, email } = req.body || {};
+      const { userId, name, email, photoUrl } = req.body || {};
       if (!userId || !name || !email) {
         return res.status(400).json({ error: 'userId, name, email required' });
       }
-      const result = await createApplicationAndNotify({ userId, name, email }, req);
+      const result = await createApplicationAndNotify(
+        { userId, name, email, photoUrl },
+        req
+      );
       return res.json(result);
     } catch (err) {
       console.error('[/api/scholar-application]', err);

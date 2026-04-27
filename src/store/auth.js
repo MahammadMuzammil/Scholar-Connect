@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { uploadApplicantPhoto } from './scholars.js';
 
 async function fetchProfile(userId) {
   const { data, error } = await supabase
@@ -47,7 +48,7 @@ export function subscribeSession(handler) {
   return () => data.subscription.unsubscribe();
 }
 
-export async function signupUser({ name, email, password, role = 'user' }) {
+export async function signupUser({ name, email, password, role = 'user', photoFile = null }) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -64,17 +65,34 @@ export async function signupUser({ name, email, password, role = 'user' }) {
   // The user is logged in as a regular 'user' until admin approves.
   if (role === 'scholar') {
     const userId = data.session.user.id;
+
+    // Optional photo upload while the user is freshly authenticated. Failures
+    // here shouldn't block the application — admin can approve and the
+    // scholar can re-upload later from the dashboard.
+    let photoUrl = null;
+    if (photoFile) {
+      try {
+        photoUrl = await uploadApplicantPhoto(userId, photoFile);
+      } catch (uploadErr) {
+        console.warn('Applicant photo upload failed:', uploadErr);
+      }
+    }
+
     try {
       const res = await fetch('/api/scholar-application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, name, email }),
+        body: JSON.stringify({ userId, name, email, photoUrl }),
       });
       const body = await res.json();
       if (!res.ok) {
         throw new Error(body.message || 'Could not submit scholar application.');
       }
-      return { applicationSubmitted: true, alreadyExists: body.alreadyExists };
+      return {
+        applicationSubmitted: true,
+        alreadyExists: body.alreadyExists,
+        photoUploaded: Boolean(photoUrl),
+      };
     } catch (err) {
       throw new Error(`Application failed: ${err.message}`);
     }

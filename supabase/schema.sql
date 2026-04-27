@@ -255,11 +255,15 @@ create table if not exists scholar_applications (
   user_id     uuid references auth.users on delete cascade not null unique,
   name        text not null,
   email       text not null,
+  photo_url   text,             -- profile photo uploaded at signup time
   status      text not null default 'pending' check (status in ('pending','approved','rejected')),
   reviewed_at timestamptz,
   notes       text,
   created_at  timestamptz not null default now()
 );
+
+-- For installs that already have the table, add the column non-destructively.
+alter table scholar_applications add column if not exists photo_url text;
 
 create index if not exists scholar_applications_status_idx on scholar_applications (status, created_at desc);
 
