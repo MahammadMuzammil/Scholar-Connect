@@ -65,19 +65,20 @@ export default function Home() {
           <div className="grid">
             {filtered.map((s) => (
               <article key={s.id} className="card scholar-card">
-                <div className="scholar-head">
-                  <div className="avatar" style={{ backgroundImage: `url(${s.photo})` }} />
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{s.name}</div>
-                    <div className="muted" style={{ fontSize: 14 }}>{s.title}</div>
-                    {s.verified && (
-                      <div style={{ marginTop: 4 }}>
-                        <span className="verified-pill">✓ Verified</span>
-                      </div>
-                    )}
-                  </div>
+                <div className="scholar-avatar-frame">
+                  <div
+                    className="avatar xl"
+                    style={{ backgroundImage: `url(${s.photo})` }}
+                    role="img"
+                    aria-label={`${s.name} profile photo`}
+                  />
+                  {s.verified && <span className="avatar-verified-badge" title="Verified scholar">✓</span>}
                 </div>
-                <div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontWeight: 700, fontSize: 18 }}>{s.name}</div>
+                  <div className="muted" style={{ fontSize: 14, marginTop: 2 }}>{s.title}</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
                   {s.specialties.map((t) => (
                     <span key={t} className="tag">{t}</span>
                   ))}
